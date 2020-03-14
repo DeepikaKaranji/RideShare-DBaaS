@@ -1,0 +1,25 @@
+version: '3.5'
+services:
+    users:  
+        build:
+            context: .
+            dockerfile: user_dockerfile
+        image: users:latest    
+        ports:
+            - "8080:80"
+        networks:
+            app_net: 
+                ipv4_address: 175.19.0.2
+        volumes:
+            - .:/web
+        environment:
+            - PORT:80
+            - TEAM_NAME=CC_0048_0103_0798
+
+networks: 
+    app_net:
+        ipam: 
+            driver: default
+            config: 
+                - subnet: "175.19.0.0/24"
+                      
