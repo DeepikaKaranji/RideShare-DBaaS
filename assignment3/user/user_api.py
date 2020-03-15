@@ -9,7 +9,7 @@ import sqlite3 as sqlite3
 import requests
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user_db.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///new_user_db.db'
 db = SQLAlchemy(app)
 
 
@@ -26,7 +26,7 @@ db.create_all()
 
 
 ###############################################TASK 0################################################
-
+#lists users
 def dict_factory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description):
@@ -35,8 +35,9 @@ def dict_factory(cursor, row):
 
 @app.route("/api/v1/users",methods=["GET"])
 def list_users():
+    print("---------------user listing api--------------")
     # a = user_details.query.filter(user_details.username).all()
-    conn = sqlite3.connect('user_db.db')
+    conn = sqlite3.connect('new_user_db.db')
     conn.row_factory = dict_factory
     cur = conn.cursor()
     all = cur.execute("SELECT username FROM user_details;").fetchall()
