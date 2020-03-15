@@ -4,4 +4,4 @@ COPY . /tmp
 WORKDIR /tmp
 RUN pip install -r ./requirements.txt
 ENTRYPOINT ["python"]
-CMD ["user_api.py"]
+CMD ["og_user_api.py"]
