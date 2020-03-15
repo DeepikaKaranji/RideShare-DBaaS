@@ -6,7 +6,7 @@ services:
             dockerfile: user_dockerfile
         image: users:latest    
         ports:
-            - "8080:80"
+            - "80:80"
         networks:
             app_net: 
                 ipv4_address: 175.19.0.2
