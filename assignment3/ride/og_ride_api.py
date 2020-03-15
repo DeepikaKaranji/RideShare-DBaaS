@@ -36,10 +36,35 @@ class join_user(db.Model):
 
 db.create_all()
 
-###############################################TASK delete microservice###################################################
-@app.route("/api/v1/rides/custom/<user>",methods=["DELETE"])
-def delete_microservice_ride(user):
+
+count = 0
+######################################## HTTP set reset count ######################################
+@app.route("/api/v1/_count", methods=["GET", "DELETE"])
+def get_http_count():
+        global count
+        print("HTTP count api")
+        if(request.method=="GET"):
+            final=[]
+            final.append(count)
+            return json.dumps(final)
+        else:
+            count-=count
+            return make_response(jsonify({}), 200)
+
+
+############################################### CUSTOM delete microservice###################################################
+@app.route("/api/v1/rides/custom",methods=["GET"])
+def delete_microservice_ride():
+    print("---------------- Custom delete ----------------")
     c = app.test_client()
+
+    if 'username' in request.args:
+        user=str(request.args['username'])
+
+
+#    user = request.get_json()['user']
+    print("RECEIVED USERNAME -------", user)
+
     para1 = {
     "table"  : "ride_details",
 	"column" : ["username"],
@@ -55,11 +80,27 @@ def delete_microservice_ride(user):
             in ride_details table",400)
     return make_response("{}",200)
 
+
+########################### COUNT RIDES ########################################
+@app.route('/api/v1/rides/count', methods=["GET"])
+def get_count():
+    global count 
+    count =count+1
+    cnt=[]
+    ride= ride_details.query.filter(ride_details.rideid).count()
+    cnt.append(ride)
+    return make_response(json.dumps(cnt), 200)
+    # return jsonify(count)
+
+
+
+
 ###############################################TASK 3################################################
 
 @app.route("/api/v1/rides",methods=["POST"])
 def add_ride():
-
+    global count
+    count=count+1
     print "-----------ride api 3-----------"
     un = request.get_json()["created_by"]
     ts = request.get_json()["timestamp"]
@@ -70,11 +111,12 @@ def add_ride():
     # resp0 = requests.get('http://127.0.0.1:5000/users/api/v1/users')
     
     #resp0 = requests.get('http://171.19.0.2:80/api/v1/users')
-    resp0 = requests.get('http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/users')
+    headers = {'Origin': '34.224.123.243'}
+    resp0 = requests.get('http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/users', headers = headers)
     resp0 = resp0.json()
 
     if(resp0 and un in resp0):
-        rid = randint(0,1)
+        rid = randint(0,9999)
         if((src>0)and(src<199)):
             if((dest>0)and(dest<199)):
                 c = app.test_client()
@@ -117,6 +159,8 @@ def add_ride():
 @app.route('/api/v1/rides', methods=["GET"]) 
 # if (type(request.args) = int):
 def upcoming_ride():
+    global count
+    count=count+1
     results={}
     res=[]
     final=[]
@@ -158,7 +202,8 @@ def upcoming_ride():
 ###############################################TASK 5################################################
 @app.route('/api/v1/rides/<int:task_id>', methods=["GET"])
 def get_task(task_id):             
-
+    global count
+    count=count+1
     c = app.test_client()
     # ride= ride_details.query.filter_by(rideid = task_id).first()
     para1 = {
@@ -199,6 +244,8 @@ def get_task(task_id):
 ###############################################TASK 6################################################
 @app.route('/api/v1/rides/<int:task_id>', methods=['POST'])
 def join_ride(task_id):
+    global count
+    count=count+1
     un = request.get_json()["username"]
 
     c = app.test_client()
@@ -241,6 +288,8 @@ def join_ride(task_id):
 
 @app.route("/api/v1/rides/100/rid",methods=["DELETE"])
 def delete_ride(rid):
+    global count
+    count=count+1
     c = app.test_client()
     para1 = {
     "table"  : "ride_details",
@@ -328,9 +377,11 @@ def read_db():
 
 
 
-##############################DELETE DB #########################
+##############################  CLEAR DB #########################
 @app.route("/api/v1/db/clear",methods=["POST"])
 def delete():
+    global count
+    count += 1
     ride_details.query.delete()
     db.session.commit()
     return {},200
