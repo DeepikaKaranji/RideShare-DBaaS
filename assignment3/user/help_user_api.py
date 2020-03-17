@@ -24,21 +24,43 @@ class join_user(db.Model):
 
 db.create_all()
 
-count = 0
+
+meth = ["VIEW", "GET","PUT","POST","DELETE","HEAD","OPTIONS","PATCH",\
+    "CONNECT","PURGE","LOCK",\
+    "LINK","UNLINK","UNLOCK","COPY","PROPFIND"]
+
+
 final=[]
-meth = ["VIEW", "GET","PUT","POST","DELETE","HEAD","OPTIONS","PATCH","CONNECT","PURGE","LOCK","LINK","UNLINK","UNLOCK","COPY","PROPFIND"]
+f = open("countfile.txt", 'r')
+c = f.read()
+count = int(c)
+f.close()
+
 ######################################## HTTP set reset count ######################################
 @app.route("/api/v1/_count", methods=["GET", "DELETE"])
 def get_http_count():
         print("HTTP count api")
         global count
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        f.close()
         if(request.method=="GET"):
  	    global final
 	    final=[]
-            final.append(count)
+            final.append(int(c))
             return json.dumps(final)
         else:
-            count-=count
+            # ---------------read, update and write count to file---------------
+            f = open("countfile.txt", 'r')
+            c = f.read()
+            # print("Count on read = ", c)
+            count = int(c) - count
+            f.close()
+            f = open("countfile.txt", 'w')
+            f.write(str(count))
+            f.close()
+            # -----------------------------------------------------------------
+
             return make_response(jsonify({}), 200)
 
 
@@ -52,23 +74,42 @@ def dict_factory(cursor, row):
 
 @app.route("/api/v1/users",methods=meth)
 def list_users():
+
     global count
     if(request.method=="GET"):
-        print("*******************", request.headers)
-        print("---------------user list api------------")
-        count=count+1
+        # print("*******************", request.headers)
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count = int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         # a = user_details.query.filter(user_details.username).all()
         conn = sqlite3.connect('user_db.db')
         conn.row_factory = dict_factory
         cur = conn.cursor()
         all = cur.execute("SELECT username FROM user_details;").fetchall()
         flatList = [ item for elem in all for item in elem]
-        # print "lenght mofo ----------------", len(flatList)
         return make_response(jsonify(flatList), 200)
+
+
     if(request.method=="PUT"):
+
         cps =['1','0','2','3','4','5','6','7','8','9','a','b','c','d','e','f','A','B','C','D','E','F']
-        # print(" ------------------- create user api -------------------")
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count = int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------  
         un = request.get_json()["username"]
         ps = request.get_json()["password"]
         c = app.test_client()
@@ -100,17 +141,35 @@ def list_users():
         response = c.post('/api/v1/db/write',json=para,follow_redirects=True)
         return make_response("{}", 201)
     else:
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count = int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # ----------------------------------------------------------------- 
         return make_response("405,Method Not Allowed",405)
 
 ###############################################TASK 2################################################
 
 @app.route("/api/v1/users/<user>",methods=meth)
 def delete_user(user):
+
     global count
     if(request.method=="DELETE"):
-        # print(" ------------------- delete user api --------------------")
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count = int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # ----------------------------------------------------------------- 
         c = app.test_client()
         para1 = {
         "table"  : "user_details",
@@ -122,11 +181,8 @@ def delete_user(user):
         if(response.get_json()): 
             res1 = user_details.query.filter(user_details.username == user).delete()
             db.session.commit()
-            payload = {"user":user}
-            print("PAYLOAD--------------- ", payload)
             url = 'http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/rides/custom?username='+user
             res2 = requests.get(url)
-    #        res2 = requests.post('http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/rides/custom', params = payload)
             db.session.commit()
 
             if(res1):
@@ -134,7 +190,16 @@ def delete_user(user):
         else:
             return make_response("Username does not exist",400)
     else:
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count = int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # ----------------------------------------------------------------- 
         return make_response("405,Method Not Allowed",405)
 
 ###############################################TASK 8################################################
@@ -214,15 +279,35 @@ def read_db():
 def delete():
     global count
     if(request.method=="POST"):
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count = int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # ----------------------------------------------------------------- 
         user_details.query.delete()
         db.session.commit()
         return {},200
     else:
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count = int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # ----------------------------------------------------------------- 
         return make_response("405,Method Not Allowed",405)
 
 if __name__ == "__main__":
     app.debug=True
     app.run(host='0.0.0.0', port = '80')
-    #app.run()
+    # app.run()
+
+
