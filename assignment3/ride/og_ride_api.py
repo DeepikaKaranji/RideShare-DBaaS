@@ -9,19 +9,10 @@ import requests
 import ast
 import sqlite3 as sqlite3
 
-
-# with open('./config.json') as config_file:
-#     config = json.load(config_file)
-
-# port = config["ride_port"]
-# server = config["ride_ip"] + ":" + port
-# userMicroService = config["user_ip"] + ":" + config["user_port"]
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ride_db.db'
 db = SQLAlchemy(app)
-# app.logger.info("USER MICROSERVICE", userMicroService)
-
 
 class ride_details(db.Model):
     rideid = db.Column(db.Integer, primary_key=True)
@@ -37,21 +28,44 @@ class join_user(db.Model):
 db.create_all()
 
 
-count = 0
-meth = ["VIEW", "GET","PUT","POST","DELETE","HEAD","OPTIONS","PATCH","CONNECT","PURGE","LOCK","LINK","UNLINK","UNLOCK","COPY","PROPFIND"]
+
+meth = ["VIEW", "GET","PUT","POST",\
+    "DELETE","HEAD","OPTIONS","PATCH",\
+        "CONNECT","PURGE","LOCK","LINK",\
+            "UNLINK","UNLOCK","COPY",\
+                "PROPFIND"]
+final=[]
+f = open("countfile.txt", 'r')
+c = f.read()
+count = int(c)
+f.close()
+
 
 
 ######################################## HTTP set reset count ######################################
 @app.route("/api/v1/_count", methods=["GET", "DELETE"])
 def get_http_count():
         global count
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        f.close()
         print("HTTP count api")
         if(request.method=="GET"):
+            global final
             final=[]
-            final.append(count)
+            final.append(int(c))
             return json.dumps(final)
         else:
-            count-=count
+            # ---------------read, update and write count to file---------------
+            f = open("countfile.txt", 'r')
+            c = f.read()
+            # print("Count on read = ", c)
+            count = int(c) - count
+            f.close()
+            f = open("countfile.txt", 'w')
+            f.write(str(count))
+            f.close()
+            # -----------------------------------------------------------------  
             return make_response(jsonify({}), 200)
 
 
@@ -89,14 +103,32 @@ def delete_microservice_ride():
 def get_count():
     if(request.method=="GET"):
         global count 
-        count =count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         cnt=[]
         ride= ride_details.query.filter(ride_details.rideid).count()
         cnt.append(ride)
         return make_response(json.dumps(cnt), 200)
     # return jsonify(count)
     else:
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         return make_response("405,Method Not Allowed",405)
 
 ###############################################TASK 3&4[CREATE RIDE and GET UPCOMING RIDES]################################################
@@ -104,9 +136,19 @@ def get_count():
 @app.route("/api/v1/rides",methods=meth)
 def add_ride():
     global count
+    
     if(request.method=="POST"):
-        count=count+1
-        # print "-----------ride api 3-----------"
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
+
         un = request.get_json()["created_by"]
         ts = request.get_json()["timestamp"]
         src =int(request.get_json()["source"])
@@ -159,7 +201,16 @@ def add_ride():
             return make_response("Username doesnot exist", 400)
         return make_response( "{}",201)
     if(request.method=="GET"):
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         results={}
         res=[]
         final=[]
@@ -198,7 +249,16 @@ def add_ride():
             return make_response("Ride Id does not exist", 400)    
     
     else:
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         return make_response("405,Method Not Allowed",405)
 
 ###############################################TASK 5,6,7[RIDE DETAILS,]################################################
@@ -206,7 +266,16 @@ def add_ride():
 def get_task(task_id):             
     global count
     if(request.method=="GET"):    
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         c = app.test_client()
         # ride= ride_details.query.filter_by(rideid = task_id).first()
         para1 = {
@@ -242,7 +311,16 @@ def get_task(task_id):
                     "destination":ride_dict["destination"]}),200)
         #    return make_response("ok", 200)
     if(request.method=="POST"):
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         un = request.get_json()["username"]
 
         c = app.test_client()
@@ -282,7 +360,16 @@ def get_task(task_id):
         else:
             return make_response("Username does not exist", 400) 
     if(request.method=="DELETE"):
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         c = app.test_client()
         para1 = {
         "table"  : "ride_details",
@@ -297,7 +384,16 @@ def get_task(task_id):
             return make_response("Ride ID does not exist",400)
         return make_response("{}",200)
     else:
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         return make_response("405,Method Not Allowed",405)
 
 
@@ -379,117 +475,35 @@ def read_db():
 def delete():
     global count
     if(request.method=="POST"):
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         ride_details.query.delete()
         db.session.commit()
         return {},200
     else:
-        count=count+1
+        # ---------------read, update and write count to file---------------
+        f = open("countfile.txt", 'r')
+        c = f.read()
+        print("Count on read = ", c)
+        count= int(c) + 1
+        f.close()
+        f = open("countfile.txt", 'w')
+        f.write(str(count))
+        f.close()
+        # -----------------------------------------------------------------
         return make_response("405,Method Not Allowed",405)
-#ride_details.query.delete()
-
-# @app.route("/api/v1/db/read",methods=["POST"])
-# def read_db():
-#     print("####9####")
-#     # print type(request)
-
-#     data = request.get_json()["where"]
-#     cn = request.get_json()["column"]
-#     tn = request.get_json()["table"]
-#     print(tn)
-
-
-
-#     # info = request.get_json() #unicode
-#     # info = json.dumps(info) #string
-#     # info = eval(info)
-#     # print type(info) #string
-#     # print "---------------------"
-
-#     # info = ast.literal_eval(info) 
-#     # print type(info) #dict
-#     # print "###################", info
-
-#     # data = info["where"]
-#     # print "---DATA---", data
-#     # # print "^^^^^^^", info["where"]
-#     # # print "&&&&&&&", info
-#     # cn = info["column"]
-#     # print("---CN---", cn)
-
-#     # tn = info["table"]
-#     # # tn=eval(tn)
-#     # print("---TN---", tn) 
-
-#     # print "TN TYPE", type(tn) #str
-#     # tn = json.loads(tn)
-#     # tn=jsonify(tn)
-#     print "TN ON EVAL TYPE----", type(tn)
-#     # new_user=tn()
-
-#     # try:
-#     #     with sqlite3.connect("ride_db.db") as con:
-#     #         cur = con.cursor()
-#     #         ind = data.find('=')
-#     #         att = data[:ind-1]
-#     #         val = data[ind+2:]
-
-#     #         query =  
-#     #         cur.execute("SELECT "+cn +\
-#     #                 "FROM "+tn+"WHERE "+ )
-#     #             con.commit()
-#     # except:
-#     #     abort(500)
-
-
-
-
-#     data = str(data)
-#     result = data.find('AND') 
-#     if(result==-1):
-#         ind = data.find('=')
-#         att = data[:ind-1]
-#         val = data[ind+2:]
-#         x = getattr(tn, att)
-#         user1= tn.query.filter((x == val)).all()
-#         d = {}
-#         for i in user1:
-#             cnt = 0
-#             for j in cn:
-#                 if j not in d:
-#                     d[j] =[]
-#                     cnt =cnt+1
-#                 a = getattr(i, j)
-#                 d[j].append(a)
-#         return jsonify(d)
-#         return {}
-
-#     else:
-#         q1 = data[:result-1]
-#         q2 = data[result+4:]
-#         i1 = q1.find('=')
-#         a1 = q1[:i1-1]
-#         v1 = q1[i1+2:]
-#         x1 = getattr(tn, a1)
-#         i2 = q1.find('=')
-#         a2 = q1[:i2-1]
-#         v2 = q1[i2+2:]
-#         x2 = getattr(tn, a2)
-#         user1= tn.query.filter((x1 == v1)&(x2 == v2)).all()
-#         d = {}
-#         for i in user1:
-#             cnt = 0
-#             for j in cn:
-#                 if j not in d:
-#                     d[j] =[]
-#                     cnt =cnt+1
-#                 a = getattr(i, j)
-#                 d[j].append(a)
-#         return jsonify(d)
-#         return {}
 
 
 if __name__ == "__main__":
     app.debug=True
     app.run(host='0.0.0.0',port='80')
-#    app.run()
+
+
