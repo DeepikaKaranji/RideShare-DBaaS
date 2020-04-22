@@ -18,7 +18,7 @@ import sqlite3 as sqlite3
 # userMicroService = config["user_ip"] + ":" + config["user_port"]
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ride_db.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///new_ride_db.db'
 db = SQLAlchemy(app)
 # app.logger.info("USER MICROSERVICE", userMicroService)
 
@@ -60,17 +60,20 @@ def delete_microservice_ride(user):
 @app.route("/api/v1/rides",methods=["POST"])
 def add_ride():
 
-    print "-----------ride api 3-----------"
+    print "-----------create ride api 3-----------"
     un = request.get_json()["created_by"]
     ts = request.get_json()["timestamp"]
     src =int(request.get_json()["source"])
     dest =int( request.get_json()["destination"])
     c = app.test_client()
     
-    resp0 = requests.get('http://127.0.0.1:5000/users/api/v1/users')
+    #resp0 = requests.get('http://127.0.0.1:5000/users/api/v1/users')
     
-    # resp0 = requests.get('http://171.19.0.2:80/api/v1/users')
-    resp0 = list(resp0)
+    resp0 = requests.get('http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/users')
+    resp0 = resp0.json()
+    print("---->", (resp0[0]))
+    if(resp0):
+        print("resp after calling user container", resp0)
 
     if(resp0 and un in resp0):
         rid = randint(0,9999)
@@ -258,6 +261,7 @@ def delete_ride(rid):
 
 @app.route("/api/v1/db/write",methods=["POST"])
 def write_db():
+   
     data = request.get_json()["insert"]
     cn = request.get_json()["column"]
     tn = request.get_json()["table"]

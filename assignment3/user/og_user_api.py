@@ -9,7 +9,7 @@ import sqlite3 as sqlite3
 import requests
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///new_user_db.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user_db.db'
 db = SQLAlchemy(app)
 
 
@@ -24,9 +24,23 @@ class join_user(db.Model):
 
 db.create_all()
 
-
+count = 0
+final=[]
+######################################## HTTP set reset count ######################################
+@app.route("/api/v1/_count", methods=["GET", "DELETE"])
+def get_http_count():
+        print("HTTP count api")
+        global count
+        if(request.method=="GET"):
+ 	    global final
+	    final=[]
+            final.append(count)
+            return json.dumps(final)
+        else:
+            count-=count
+            return make_response(jsonify({}), 200)
 ###############################################TASK 0################################################
-#lists users
+
 def dict_factory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description):
@@ -35,9 +49,12 @@ def dict_factory(cursor, row):
 
 @app.route("/api/v1/users",methods=["GET"])
 def list_users():
-    print("---------------user listing api--------------")
+    print("*******************", request.headers)
+    print("---------------user list api------------")
+    global count
+    count=count+1
     # a = user_details.query.filter(user_details.username).all()
-    conn = sqlite3.connect('new_user_db.db')
+    conn = sqlite3.connect('user_db.db')
     conn.row_factory = dict_factory
     cur = conn.cursor()
     all = cur.execute("SELECT username FROM user_details;").fetchall()
@@ -51,6 +68,9 @@ cps =['1','0','2','3','4','5','6','7','8','9','a','b','c','d','e','f','A','B','C
 
 @app.route("/api/v1/users",methods=["PUT"])
 def add_user():
+    print(" ------------------- create user api -------------------")
+    global count
+    count=count+1
     un = request.get_json()["username"]
     ps = request.get_json()["password"]
     c = app.test_client()
@@ -86,6 +106,9 @@ def add_user():
 
 @app.route("/api/v1/users/<user>",methods=["DELETE"])
 def delete_user(user):
+    print(" ------------------- delete user api --------------------")
+    global count
+    count=count+1
     c = app.test_client()
     para1 = {
     "table"  : "user_details",
@@ -96,17 +119,16 @@ def delete_user(user):
     #user1= user_details.query.filter_by(username = user).first()
     if(response.get_json()): 
         res1 = user_details.query.filter(user_details.username == user).delete()
-        res2 = requests.delete('http://171.19.0.3:80/api/v1/rides/custom/user')
+        db.session.commit()
+        payload = {"user":user}
+        print("PAYLOAD--------------- ", payload)
+        url = 'http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/rides/custom?username='+user
+        res2 = requests.get(url)
+#        res2 = requests.post('http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/rides/custom', params = payload)
         db.session.commit()
 
         if(res1):
-            return make_response("{}",200)    
-    # else:
-    #     return(make_response("Deletion didnt occur correctly:\
-    #              Bad request"), 400)
-        
-
-        # ride_details.query.filter(ride_details.username == user).delete()
+            return make_response("{}",200) 
     else:
         return make_response("Username does not exist",400)
 
@@ -182,7 +204,16 @@ def read_db():
         return jsonify(d)
         return {}
 
+########################### CLEAR DB ############################
+@app.route("/api/v1/db/clear",methods=["POST"])
+def delete():
+    global count
+    count=count+1
+    user_details.query.delete()
+    db.session.commit()
+    return {},200
 
 if __name__ == "__main__":
     app.debug=True
-    app.run(host='0.0.0.0', port='80')
+    app.run(host='0.0.0.0', port = '80')
+
