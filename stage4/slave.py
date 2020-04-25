@@ -2,12 +2,64 @@ import pika
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import json
+import docker
+import subprocess
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///slave_rideshare.db'
 db = SQLAlchemy(app)
 
+
+
+import logging
+
+from kazoo.client import KazooClient
+from kazoo.client import KazooState
+logging.basicConfig()
+
+def demo_func(event):
+    # Create a node with dat
+    print(event)
+    children = zk.get_children("/worker/slave")
+    print(" IN DEMO There are %s children with names %s" % (len(children), children))
+
+
+zk = KazooClient(hosts='zoo:2181')
+zk.start()
+cmd = "cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
+cid = subprocess.check_output(cmd,shell=True)
+cid = cid.decode("utf-8")
+cid=cid[0:len(cid)-1]
+#cidout = cid[0:
+client2 = docker.APIClient()
+pid = client2.inspect_container(cid)['State']['Pid']
+print("---PID", pid)
+
+print('#########################')
+#print(container)
+
+print("------------------------")
+
+#zk.ensure_path("/worker")
+#zk.ensure_path("/worker/slave")
+zk.create("/worker/slave", b"hi")
+
+if zk.exists("/worker/slave/slave1"):
+    print("Slave exists")
+else:
+    data1 = "I am slave CID : "+cid+" PID : "+str(pid)
+    data1 = data1.encode()
+    zk.create("/worker/slave/slave1", data1)
+
+data, stat = zk.get("/worker/slave/slave1")
+print("Version: %s, data: %s" % (stat.version, data.decode("utf-8")))
+
+children = zk.get_children("/worker/slave", watch=demo_func)
+print("SLAVESSSS OUTSIDE There are %s children with names %s" % (len(children), children))
+
+#zk.delete("/producer/node_1")
+print("Deleted /producer/node_1")
 
 class user_details(db.Model):
     username = db.Column(db.String(80), primary_key=True)
@@ -27,6 +79,7 @@ class join_user(db.Model):
 db.create_all()
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
 channel = connection.channel()
+channel.queue_declare(queue='rpcq', durable = True)
 channel.queue_declare(queue='sq',durable = True)
 
 def callback_sync(ch, method, properties, body): 
@@ -46,10 +99,9 @@ def callback_sync(ch, method, properties, body):
     #print("DDDOOOOOOONNNNNNNNNNEEEEEEEEEEEEEEEEE")
     ch.basic_ack(delivery_tag = method.delivery_tag)
      
-channel.basic_consume(queue='sq', on_message_callback=callback_sync)
-print(' [*] Waiting for messages. To exit press CTRL+C')
+#print(' [*] Waiting for messages. To exit press CTRL+C')
 #channel.start_consuming()
-channel.queue_declare(queue='rpcq', durable = True)
+
 
 def callback_read(x): 
     print(" [x] Received IN READ%r" % x)
@@ -120,9 +172,8 @@ def on_request(ch, method, props, body):
                      body=str(response))
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
-
+channel.basic_consume(queue='sq', on_message_callback=callback_sync)
 channel.basic_consume(queue='rpcq', on_message_callback=on_request)
-
 print(' [*] Waiting for messages. To exit press CTRL+C')
 channel.start_consuming() 
 

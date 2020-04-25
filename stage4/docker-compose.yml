@@ -55,11 +55,14 @@ services:
         dockerfile: Dockerfile
     command: sh -c "sleep 25 && python zk_orch.py"
     volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
         - .:/code
     links:
     - rmq
+    - zoo
     depends_on:
     - rmq
+    - zoo
     restart: on-failure  
     ports:
       - 5000:5000

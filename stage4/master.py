@@ -11,7 +11,7 @@ from kazoo.client import KazooState
 logging.basicConfig()
 
 def demo_func(event):
-    # Create a node with data
+    # Create a node with dat
     print(event)
     children = zk.get_children("/worker")
     print(" IN DEMO There are %s children with names %s" % (len(children), children))

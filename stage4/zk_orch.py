@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
 import json
-
+import docker
 import uuid
 import pika
 
@@ -22,7 +22,6 @@ def list():
     zk = KazooClient(hosts='zoo:2181')
     zk.start()
     l=[]
-    # master list
     ms = "/worker/master"
     data, stat = zk.get(ms)
     data = data.decode("utf-8")
@@ -31,10 +30,8 @@ def list():
     pid=int(pid)
     l.append(pid)
     sl = zk.get_children("/worker/slave")
-
-    # slave list
     for i in sl:
-        print("I" ,i)
+#        print("I" ,i)
         nm ="/worker/slave/"+i
         data, stat = zk.get(nm)
         data = data.decode("utf-8")
@@ -43,6 +40,35 @@ def list():
         pid=int(pid)
         l.append(pid)
     l.sort()
+    return make_response(json.dumps(l),200)
+
+
+@app.route("/api/v1/crash/slave",methods=["POST"])
+def crash_slave():
+    zk = KazooClient(hosts='zoo:2181')
+    zk.start()
+    maxi=0
+    l=[]
+    sl = zk.get_children("/worker/slave")
+    for i in sl:
+#        print("I" ,i)
+        nm ="/worker/slave/"+i
+        data, stat = zk.get(nm)
+        data = data.decode("utf-8")
+        ind = data.find('PID')
+        pid = data[ind+6:len(data)+1]
+        pid=int(pid)
+        print("PIDDDDD:   ", pid)
+        if(pid>maxi):
+            maxi=pid
+            ind = data.find('CID')
+            cid = data[ind+6:ind+18]
+    l.append(maxi)
+#    print("DELET#E PID:", maxi)
+    client = docker.from_env()
+    container = client.containers.get(cid)
+    print(cid)
+    print(container)
     return make_response(json.dumps(l),200)
 
 
