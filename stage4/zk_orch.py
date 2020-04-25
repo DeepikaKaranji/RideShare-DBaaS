@@ -5,9 +5,46 @@ import json
 import uuid
 import pika
 
+import logging
+
+from kazoo.client import KazooClient
+from kazoo.client import KazooState
+logging.basicConfig()
+
+
+
 print("HI ORCH")
 
 app = Flask(__name__)
+
+@app.route("/api/v1/worker/list",methods=["GET"])
+def list():
+    zk = KazooClient(hosts='zoo:2181')
+    zk.start()
+    l=[]
+    # master list
+    ms = "/worker/master"
+    data, stat = zk.get(ms)
+    data = data.decode("utf-8")
+    ind = data.find('PID')
+    pid = data[ind+5:len(data)+1]
+    pid=int(pid)
+    l.append(pid)
+    sl = zk.get_children("/worker/slave")
+
+    # slave list
+    for i in sl:
+        print("I" ,i)
+        nm ="/worker/slave/"+i
+        data, stat = zk.get(nm)
+        data = data.decode("utf-8")
+        ind = data.find('PID')
+        pid = data[ind+5:len(data)+1]
+        pid=int(pid)
+        l.append(pid)
+    l.sort()
+    return make_response(json.dumps(l),200)
+
 
 @app.route("/api/v1/db/write",methods=["POST"])
 def write_db():
@@ -30,10 +67,6 @@ def write_db():
     print(" [x] Sent %r" % test)
     connection.close()
     return {},200
-
-
-
-
 
 class TestRpcClient(object):
 

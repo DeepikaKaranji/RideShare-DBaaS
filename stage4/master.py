@@ -2,6 +2,50 @@ import pika
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import json
+import subprocess
+import docker
+import logging
+
+from kazoo.client import KazooClient
+from kazoo.client import KazooState
+logging.basicConfig()
+
+def demo_func(event):
+    # Create a node with data
+    print(event)
+    children = zk.get_children("/worker")
+    print(" IN DEMO There are %s children with names %s" % (len(children), children))
+
+
+zk = KazooClient(hosts='zoo:2181')
+zk.start()
+zk.delete("/worker", recursive=True)
+
+cmd = "cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
+cid = subprocess.check_output(cmd,shell=True)
+cid = cid.decode("utf-8")
+cid=cid[0:len(cid)-1]
+client2 = docker.APIClient()
+pid = client2.inspect_container(cid)['State']['Pid']
+print("---PID", pid)
+
+zk.ensure_path("/worker")
+if zk.exists("/worker/master"):
+    print("Master exists")
+else:
+    data1 = "I am master CID : "+cid+" PID : "+str(pid)
+    data1 = data1.encode()
+    zk.create("/worker/master", data1)
+
+data, stat = zk.get("/worker/master")
+print("Version: %s, data: %s" % (stat.version, data.decode("utf-8")))
+
+children = zk.get_children("/worker", watch=demo_func)
+#print("OUTSIDE There are %s children with names %s" % (len(children), children))
+
+
+#zk.delete("/producer/node_1")
+#print("Deleted /producer/node_1")
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
