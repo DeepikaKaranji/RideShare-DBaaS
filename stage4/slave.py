@@ -18,7 +18,7 @@ from kazoo.client import KazooClient
 from kazoo.client import KazooState
 logging.basicConfig()
 
-def demo_func(event):
+def demo_fuc(event):
     # Create a node with dat
     print(event)
     children = zk.get_children("/worker/slave")
@@ -43,20 +43,24 @@ print("------------------------")
 
 #zk.ensure_path("/worker")
 #zk.ensure_path("/worker/slave")
-zk.create("/worker/slave", b"hi")
 
-if zk.exists("/worker/slave/slave1"):
+if zk.exists("/worker/slave"):
+    print("Slave exists")
+else:
+    zk.create("/worker/slave", b"hi")
+
+children = zk.get_children("/worker/slave", watch=demo_fuc)
+print("SLAVESSSS OUTSIDE There are %s children with names %s" % (len(children), children))
+
+if zk.exists("/worker/slave/slave"+str(pid)):
     print("Slave exists")
 else:
     data1 = "I am slave CID : "+cid+" PID : "+str(pid)
     data1 = data1.encode()
-    zk.create("/worker/slave/slave1", data1)
+    zk.create("/worker/slave/slave"+str(pid), data1)
 
-data, stat = zk.get("/worker/slave/slave1")
-print("Version: %s, data: %s" % (stat.version, data.decode("utf-8")))
-
-children = zk.get_children("/worker/slave", watch=demo_func)
-print("SLAVESSSS OUTSIDE There are %s children with names %s" % (len(children), children))
+#data, stat = zk.get_children("/worker/slave")
+#print("Version: %s, data: %s" % (stat.version, data.decode("utf-8")))
 
 #zk.delete("/producer/node_1")
 print("Deleted /producer/node_1")

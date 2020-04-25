@@ -33,7 +33,23 @@ services:
     - zoo
     restart: on-failure
 
-  slave:
+  slave1:
+    build:
+        context: .
+        dockerfile: Dockerfile
+    command: sh -c "sleep 20 && python slave.py"
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - .:/code
+    links:
+    - rmq
+    - zoo
+    depends_on:
+    - rmq
+    - zoo
+    restart: on-failure
+
+  slave2:
     build:
         context: .
         dockerfile: Dockerfile

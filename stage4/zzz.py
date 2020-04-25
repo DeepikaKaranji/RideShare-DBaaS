@@ -1,86 +1,24 @@
 from flask import Flask, jsonify, request, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
 import json
-import docker
+
 import uuid
 import pika
-
-import logging
-
-from kazoo.client import KazooClient
-from kazoo.client import KazooState
-logging.basicConfig()
-
-
 
 print("HI ORCH")
 
 app = Flask(__name__)
 
-@app.route("/api/v1/worker/list",methods=["GET"])
-def list():
-    zk = KazooClient(hosts='zoo:2181')
-    zk.start()
-    l=[]
-    ms = "/worker/master"
-    data, stat = zk.get(ms)
-    data = data.decode("utf-8")
-    ind = data.find('PID')
-    pid = data[ind+5:len(data)+1]
-    pid=int(pid)
-    l.append(pid)
-    sl = zk.get_children("/worker/slave")
-    for i in sl:
-#        print("I" ,i)
-        nm ="/worker/slave/"+i
-        data, stat = zk.get(nm)
-        data = data.decode("utf-8")
-        ind = data.find('PID')
-        pid = data[ind+5:len(data)+1]
-        pid=int(pid)
-        l.append(pid)
-    l.sort()
-    return make_response(json.dumps(l),200)
-
-
-@app.route("/api/v1/crash/slave",methods=["POST"])
-def crash_slave():
-    zk = KazooClient(hosts='zoo:2181')
-    zk.start()
-    maxi=0
-    l=[]
-    sl = zk.get_children("/worker/slave")
-    for i in sl:
-#        print("I" ,i)
-        nm ="/worker/slave/"+i
-        data, stat = zk.get(nm)
-        data = data.decode("utf-8")
-        ind = data.find('PID')
-        pid = data[ind+6:len(data)+1]
-        pid=int(pid)
-        print("PIDDDDD:   ", pid)
-        if(pid>maxi):
-            maxi=pid
-            ind = data.find('CID')
-            cid = data[ind+6:ind+18]
-    l.append(maxi)
-#    print("DELET#E PID:", maxi)
-    client = docker.from_env()
-    container = client.containers.get(cid)
-    print(cid)
-    print(container)
-    container.stop()
-    return make_response(json.dumps(l),200)
-
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
+channel = connection.channel()
+channel.queue_declare(queue='wq',durable = True)
+    
 
 @app.route("/api/v1/db/write",methods=["POST"])
 def write_db():
     data = request.get_json()["insert"]
     cn = request.get_json()["column"]
     tn = request.get_json()["table"]
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
-    channel = connection.channel()
-    channel.queue_declare(queue='wq',durable = True)
     test= "{\"insert\": ["
     for i in range(0,len(data)-1):
         test= test+ "\"" +data[i] + "\"" + ","
@@ -92,17 +30,14 @@ def write_db():
     test =  test +"] , \"table\"" +":"+ "\"" + tn +"\"" +"}"
     channel.basic_publish(exchange='', routing_key='wq', body=test, properties=pika.BasicProperties(delivery_mode=2,))
     print(" [x] Sent %r" % test)
-    connection.close()
     return {},200
+
+corr_id = str(uuid.uuid4())
+
 
 class TestRpcClient(object):
 
     def __init__(self):
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rmq'))
-
-        self.channel = self.connection.channel()
-
         result = self.channel.queue_declare(queue='', exclusive=True)
         self.callback_queue = result.method.queue
 
@@ -117,7 +52,7 @@ class TestRpcClient(object):
 
     def call(self, n):
         self.response = None
-        self.corr_id = str(uuid.uuid4())
+        
         self.channel.basic_publish(
             exchange='',
             routing_key='rpcq',
@@ -136,20 +71,17 @@ def read_db():
     data = request.get_json()["where"]
     cn = request.get_json()["column"]
     tn = request.get_json()["table"]
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
-    channel = connection.channel()
-    channel.queue_declare(queue='rq',durable=True)
     test= "{\"where\": "+"\"" + data + "\"" + ", \"table\"" +":"+ "\"" + tn + "\"" + ",\"column\" : [ "
     for i in range(0,len(cn)-1):
     	test= test+ "\"" +cn[i] + "\"" + ","
     test= test + "\"" + cn[len(cn)-1] + "\" ] }"
-  #  channel.basic_publish(exchange='', routing_key='rq', body=test, properties=pika.BasicProperties(delivery_mode=2,))
     print(" [x] Sent %r" % test)
     test_rpc = TestRpcClient()
     result = test_rpc.call(test)
     print("RPC is %r" %result)
-    connection.close()
     return {},200
+
+connection.close()
 
 if __name__ == "__main__":
     app.debug=True
