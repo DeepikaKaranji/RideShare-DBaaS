@@ -19,6 +19,7 @@ app = Flask(__name__)
 
 @app.route("/api/v1/worker/list",methods=["GET"])
 def list():
+#    zk = KazooClient(hosts='zoo:2181',timeout=1)
     zk = KazooClient(hosts='zoo:2181')
     zk.start()
     l=[]
@@ -42,6 +43,24 @@ def list():
     l.sort()
     return make_response(json.dumps(l),200)
 
+@app.route("/api/v1/crash/master",methods=["POST"])
+def crash_master():
+    zk = KazooClient(hosts='zoo:2181')
+    zk.start()
+    m = "/worker/master"
+    data, stat = zk.get(m)
+    data = data.decode("utf-8")
+    ind = data.find('CID')
+    cid = data[ind+6:ind+18]
+    client = docker.from_env()
+    container = client.containers.get(cid)
+    print(cid)
+    print(container)
+    zk.delete("/worker/master", version=-1, recursive=False)
+    # children = zk.get_children("/worker")
+    # print("CHILDREN OF WORKER There are %s children with names %s" % (len(children), children))
+    container.kill()
+    return {},200
 
 @app.route("/api/v1/crash/slave",methods=["POST"])
 def crash_slave():
@@ -69,7 +88,10 @@ def crash_slave():
     container = client.containers.get(cid)
     print(cid)
     print(container)
-    container.stop()
+    zk.delete("/worker/slave/slave"+str(maxi), version=-1, recursive=False)
+    # children = zk.get_children("/worker/slave")
+    # print("CHILDREN OF SLAVE There are %s children with names %s" % (len(children), children))
+    # container.kill()
     return make_response(json.dumps(l),200)
 
 
@@ -143,7 +165,7 @@ def read_db():
     for i in range(0,len(cn)-1):
     	test= test+ "\"" +cn[i] + "\"" + ","
     test= test + "\"" + cn[len(cn)-1] + "\" ] }"
-  #  channel.basic_publish(exchange='', routing_key='rq', body=test, properties=pika.BasicProperties(delivery_mode=2,))
+  # channel.basic_publish(exchange='', routing_key='rq', body=test, properties=pika.BasicProperties(delivery_mode=2,))
     print(" [x] Sent %r" % test)
     test_rpc = TestRpcClient()
     result = test_rpc.call(test)

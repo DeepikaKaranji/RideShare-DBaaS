@@ -4,26 +4,48 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 import docker
 import subprocess
+import random
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///slave_rideshare.db'
 db = SQLAlchemy(app)
-
+print("---------RUNNING SLAVE.PY--------")
 
 
 import logging
-
 from kazoo.client import KazooClient
 from kazoo.client import KazooState
 logging.basicConfig()
 
-def demo_fuc(event):
+def slave_function(event):
     # Create a node with dat
-    print(event)
-    children = zk.get_children("/worker/slave")
-    print(" IN DEMO There are %s children with names %s" % (len(children), children))
-
+    print("event",event)
+    print("SLAVE FUNCTION CALLED")
+    if(event.type == 'DELETED'):
+        print("---------Spawning New Slave!!--------")
+        client = docker.from_env()
+        print("YESSSSSSSSSS")
+        new_container = client.containers.create(
+            image = "working_slave1:latest",
+            command = "python /code/slave.py",
+            name = "tatti_part_"+str(random.random()),
+#           restart_policy = {'Name':'on-failure'},
+            volumes = {
+                '/var/run/docker.sock': {'bind':'/var/run/docker.sock', 'mode':'rw'},
+                '/home/dpk/Desktop/working':{'bind':'/code', 'mode':'rw'}    
+            },
+            network = "working_default",
+            detach = True
+        )
+        print("Trying to start a new container")
+        new_container.start()
+        print(new_container.logs())
+        print("dddddddddddddddddddddddddd")
+       # new_container.start()
+        print("NEW CONTAINER--", new_container)
+    else:
+        print("UH what event is this even??")
 
 zk = KazooClient(hosts='zoo:2181')
 zk.start()
@@ -36,10 +58,10 @@ client2 = docker.APIClient()
 pid = client2.inspect_container(cid)['State']['Pid']
 print("---PID", pid)
 
-print('#########################')
+#print('#########################')
 #print(container)
 
-print("------------------------")
+#print("------------------------")
 
 #zk.ensure_path("/worker")
 #zk.ensure_path("/worker/slave")
@@ -49,21 +71,17 @@ if zk.exists("/worker/slave"):
 else:
     zk.create("/worker/slave", b"hi")
 
-children = zk.get_children("/worker/slave", watch=demo_fuc)
-print("SLAVESSSS OUTSIDE There are %s children with names %s" % (len(children), children))
-
-if zk.exists("/worker/slave/slave"+str(pid)):
-    print("Slave exists")
-else:
-    data1 = "I am slave CID : "+cid+" PID : "+str(pid)
-    data1 = data1.encode()
-    zk.create("/worker/slave/slave"+str(pid), data1)
+#print("SLAVESSSS OUTSIDE There are %s children with names %s" % (len(children), children))
+data1 = "I am slaver CID : "+cid+" PID : "+str(pid)
+data1 = data1.encode()
+zk.create("/worker/slave/slave"+str(pid), data1)
 
 #data, stat = zk.get_children("/worker/slave")
 #print("Version: %s, data: %s" % (stat.version, data.decode("utf-8")))
-
+children = zk.get("/worker/slave/slave"+str(pid), watch=slave_function)
+print("Slave created with ", children)
 #zk.delete("/producer/node_1")
-print("Deleted /producer/node_1")
+#print("Deleted /producer/node_1")
 
 class user_details(db.Model):
     username = db.Column(db.String(80), primary_key=True)

@@ -10,15 +10,29 @@ from kazoo.client import KazooClient
 from kazoo.client import KazooState
 logging.basicConfig()
 
-def demo_func(event):
-    # Create a node with dat
+def master_function(event):
     print(event)
     children = zk.get_children("/worker")
-    print(" IN DEMO There are %s children with names %s" % (len(children), children))
-
+    print(" MASTER FUNCTION There are %s children with names %s" % (len(children), children))
+    l=[]
+    sl = zk.get_children("/worker/slave")
+    for i in sl:
+#        print("I" ,i)
+        nm ="/worker/slave/"+i
+        data, stat = zk.get(nm)
+        data = data.decode("utf-8")
+        ind = data.find('PID')
+        pid = data[ind+5:len(data)+1]
+        pid=int(pid)
+        l.append(pid)
+    l.sort()
+    tokill=l[0]
+    print("SLAVE PID",tokill)
 
 zk = KazooClient(hosts='zoo:2181')
 zk.start()
+
+zk.delete("/worker/slave", recursive=True)
 zk.delete("/worker", recursive=True)
 
 cmd = "cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
@@ -37,15 +51,7 @@ else:
     data1 = data1.encode()
     zk.create("/worker/master", data1)
 
-data, stat = zk.get("/worker/master")
-print("Version: %s, data: %s" % (stat.version, data.decode("utf-8")))
-
-children = zk.get_children("/worker", watch=demo_func)
-#print("OUTSIDE There are %s children with names %s" % (len(children), children))
-
-
-#zk.delete("/producer/node_1")
-#print("Deleted /producer/node_1")
+children = zk.get("/worker/master", watch=master_function)
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
