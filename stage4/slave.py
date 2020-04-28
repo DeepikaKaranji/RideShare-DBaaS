@@ -4,67 +4,73 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 import docker
 import subprocess
-import random
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///slave_rideshare.db'
-db = SQLAlchemy(app)
-print("---------RUNNING SLAVE.PY--------")
-
-
 import logging
+import os
 from kazoo.client import KazooClient
 from kazoo.client import KazooState
 logging.basicConfig()
+
+zk = KazooClient(hosts='zoo:2181',timeout=1.0)
+zk.start(timeout=1)
+
+cmd = "cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
+cid = subprocess.check_output(cmd,shell=True)
+cid = cid.decode("utf-8")
+cid=cid[0:12]
+
+client2 = docker.APIClient()
+pid = client2.inspect_container(cid)['State']['Pid']
+print("---SLAVE PID", pid)
+print("---CID", cid)
 
 def slave_function(event):
     # Create a node with dat
     print("event",event)
     print("SLAVE FUNCTION CALLED")
     if(event.type == 'DELETED'):
+        # delete old db
+
+
+        # find master db pid (same as data in znode of master)
+        ms = "/worker/master"
+        data, stat = zk.get(ms)
+        print("DATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", data)
+        data = data.decode("utf-8")
+        ind = data.find('PID')
+        pid = data[ind+5:len(data)+1]
+        masterdb = str(pid)+".db"
+        print("MASTER DB---------------", masterdb)
+
+
+        # spawn new slave
         print("---------Spawning New Slave!!--------")
         client = docker.from_env()
-        print("YESSSSSSSSSS")
         new_container = client.containers.create(
-            image = "working_slave1:latest",
+            image = "zook_slave1:latest",
             command = "python /code/slave.py",
-            name = "tatti_part_"+str(random.random()),
-#           restart_policy = {'Name':'on-failure'},
             volumes = {
                 '/var/run/docker.sock': {'bind':'/var/run/docker.sock', 'mode':'rw'},
-                '/home/dpk/Desktop/working':{'bind':'/code', 'mode':'rw'}    
+                '/home/dpk/Desktop/magic/zook':{'bind':'/code', 'mode':'rw'}    
             },
-            network = "working_default",
+            network = "zook_default",
             detach = True
         )
         print("Trying to start a new container")
         new_container.start()
-        print(new_container.logs())
-        print("dddddddddddddddddddddddddd")
-       # new_container.start()
+        # print(new_container.logs())
         print("NEW CONTAINER--", new_container)
+
+        # copy to new container db from master db
+        new_cid = new_container.id
+        client2 = docker.APIClient()
+        new_pid = client2.inspect_container(new_cid)['State']['Pid']
+        cmd = "cp "+ masterdb +" "+ str(new_pid)+".db"
+        # print("*********** COMMAND: ", cmd)
+        res = os.system(cmd)
+
     else:
         print("UH what event is this even??")
-
-zk = KazooClient(hosts='zoo:2181')
-zk.start()
-cmd = "cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
-cid = subprocess.check_output(cmd,shell=True)
-cid = cid.decode("utf-8")
-cid=cid[0:len(cid)-1]
-#cidout = cid[0:
-client2 = docker.APIClient()
-pid = client2.inspect_container(cid)['State']['Pid']
-print("---PID", pid)
-
-#print('#########################')
-#print(container)
-
-#print("------------------------")
-
-#zk.ensure_path("/worker")
-#zk.ensure_path("/worker/slave")
+     
 
 if zk.exists("/worker/slave"):
     print("Slave exists")
@@ -74,14 +80,20 @@ else:
 #print("SLAVESSSS OUTSIDE There are %s children with names %s" % (len(children), children))
 data1 = "I am slaver CID : "+cid+" PID : "+str(pid)
 data1 = data1.encode()
-zk.create("/worker/slave/slave"+str(pid), data1)
+zk.create("/worker/slave/slave"+str(pid), data1, ephemeral = True)
 
 #data, stat = zk.get_children("/worker/slave")
 #print("Version: %s, data: %s" % (stat.version, data.decode("utf-8")))
 children = zk.get("/worker/slave/slave"+str(pid), watch=slave_function)
-print("Slave created with ", children)
 #zk.delete("/producer/node_1")
 #print("Deleted /producer/node_1")
+
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///'+str(pid)+'.db'
+db = SQLAlchemy(app)
+
 
 class user_details(db.Model):
     username = db.Column(db.String(80), primary_key=True)
@@ -102,7 +114,11 @@ db.create_all()
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
 channel = connection.channel()
 channel.queue_declare(queue='rpcq', durable = True)
-channel.queue_declare(queue='sq',durable = True)
+#channel.queue_declare(queue='sq',durable = True)
+channel.exchange_declare(exchange='logs', exchange_type='fanout')
+result = channel.queue_declare(queue='', exclusive=True)
+queue_name = result.method.queue
+channel.queue_bind(exchange='logs', queue=queue_name)
 
 def callback_sync(ch, method, properties, body): 
     print(" [x] Received %r" % body)
@@ -118,15 +134,14 @@ def callback_sync(ch, method, properties, body):
          setattr(new_user, c1, data1)
     db.session.add(new_user)
     db.session.commit()
-    #print("DDDOOOOOOONNNNNNNNNNEEEEEEEEEEEEEEEEE")
-    ch.basic_ack(delivery_tag = method.delivery_tag)
-     
-#print(' [*] Waiting for messages. To exit press CTRL+C')
-#channel.start_consuming()
+
 
 
 def callback_read(x): 
     print(" [x] Received IN READ%r" % x)
+    print("======================")
+    print("PID: ", str(pid))
+    print("======================")
 #    x=json.loads(body)
     data = x["where"]
     cn = x["column"]
@@ -194,7 +209,10 @@ def on_request(ch, method, props, body):
                      body=str(response))
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
-channel.basic_consume(queue='sq', on_message_callback=callback_sync)
+#channel.basic_consume(queue='sq', on_message_callback=callback_sync)
+channel.basic_consume(
+    queue=queue_name, on_message_callback=callback_sync, auto_ack=True)
+
 channel.basic_consume(queue='rpcq', on_message_callback=on_request)
 print(' [*] Waiting for messages. To exit press CTRL+C')
 channel.start_consuming() 

@@ -4,24 +4,23 @@ import json
 import docker
 import uuid
 import pika
-
+import time
 import logging
 
 from kazoo.client import KazooClient
 from kazoo.client import KazooState
 logging.basicConfig()
 
-
-
 print("HI ORCH")
 
 app = Flask(__name__)
 
+zk = KazooClient(hosts='zoo:2181',timeout=1.0)
+zk.start(timeout=1)
+
+
 @app.route("/api/v1/worker/list",methods=["GET"])
 def list():
-#    zk = KazooClient(hosts='zoo:2181',timeout=1)
-    zk = KazooClient(hosts='zoo:2181')
-    zk.start()
     l=[]
     ms = "/worker/master"
     data, stat = zk.get(ms)
@@ -32,7 +31,6 @@ def list():
     l.append(pid)
     sl = zk.get_children("/worker/slave")
     for i in sl:
-#        print("I" ,i)
         nm ="/worker/slave/"+i
         data, stat = zk.get(nm)
         data = data.decode("utf-8")
@@ -45,27 +43,30 @@ def list():
 
 @app.route("/api/v1/crash/master",methods=["POST"])
 def crash_master():
-    zk = KazooClient(hosts='zoo:2181')
-    zk.start()
     m = "/worker/master"
     data, stat = zk.get(m)
+    l=[]
     data = data.decode("utf-8")
+    ind = data.find('PID')
+    pid = data[ind+5:len(data)+1]
+    pid=int(pid)
+    l.append(pid)
     ind = data.find('CID')
     cid = data[ind+6:ind+18]
+    zk.delete("/worker/master", version=-1, recursive=False)
     client = docker.from_env()
     container = client.containers.get(cid)
     print(cid)
     print(container)
-    zk.delete("/worker/master", version=-1, recursive=False)
-    # children = zk.get_children("/worker")
-    # print("CHILDREN OF WORKER There are %s children with names %s" % (len(children), children))
-    container.kill()
-    return {},200
+    time.sleep(20)
+    children = zk.get_children("/worker")
+    print(" IN ORCH %s children with names %s" % (len(children), children))#master,slave
+    children = zk.get_children("/worker/slave")
+    print(" IN ORCH %s children with names %s" % (len(children), children))#master,slave
+    return make_response(json.dumps(l),200)
 
 @app.route("/api/v1/crash/slave",methods=["POST"])
 def crash_slave():
-    zk = KazooClient(hosts='zoo:2181')
-    zk.start()
     maxi=0
     l=[]
     sl = zk.get_children("/worker/slave")
@@ -83,15 +84,18 @@ def crash_slave():
             ind = data.find('CID')
             cid = data[ind+6:ind+18]
     l.append(maxi)
-#    print("DELET#E PID:", maxi)
+    zk.delete("/worker/slave/slave"+str(maxi), version=-1, recursive=False)
     client = docker.from_env()
     container = client.containers.get(cid)
     print(cid)
     print(container)
-    zk.delete("/worker/slave/slave"+str(maxi), version=-1, recursive=False)
-    # children = zk.get_children("/worker/slave")
-    # print("CHILDREN OF SLAVE There are %s children with names %s" % (len(children), children))
-    # container.kill()
+    # delete db
+    print("----Deleting DB of Worker with PID "+str(maxi)+"----")
+    res = os.system("rm "+str(maxi)+".db")
+    print("deleted res: ", res)
+
+    time.sleep(20)
+    container.kill()
     return make_response(json.dumps(l),200)
 
 
@@ -165,7 +169,7 @@ def read_db():
     for i in range(0,len(cn)-1):
     	test= test+ "\"" +cn[i] + "\"" + ","
     test= test + "\"" + cn[len(cn)-1] + "\" ] }"
-  # channel.basic_publish(exchange='', routing_key='rq', body=test, properties=pika.BasicProperties(delivery_mode=2,))
+  #  channel.basic_publish(exchange='', routing_key='rq', body=test, properties=pika.BasicProperties(delivery_mode=2,))
     print(" [x] Sent %r" % test)
     test_rpc = TestRpcClient()
     result = test_rpc.call(test)
