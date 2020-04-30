@@ -74,7 +74,9 @@ def delete_microservice_ride():
 	"where" :  "username = "+ user
     }
     # print "PARA 1 --------", para1
-    response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+    #response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+    url = 'http://54.83.164:5000/api/v1/db/read'
+    response = requests.post(url, data = para1)
     if(response.get_json()): 
         ride_details.query.filter(ride_details.username == user).delete()
         db.session.commit()
@@ -130,7 +132,9 @@ def add_ride():
                             "column" : ["rideid","username","timestamp","source","destination"],
                             "insert" : [rid,un,ts,src,dest]
                     }
-                    resp2 = c.post('/api/v1/db/write',json=para2,follow_redirects=True)
+                    #resp2 = c.post('/api/v1/db/write',json=para2,follow_redirects=True)
+                    url = 'http://54.83.164:5000/api/v1/db/write'
+                    resp2 = requests.post(url, data = para2)
                     
                     para3 = {
                         "table": "ride_details",
@@ -138,8 +142,10 @@ def add_ride():
                         "where":"username = "+un
                     }
                     
-                    resp3 = c.post('/api/v1/db/read',json=para3,follow_redirects=True)
-                    
+                    #resp3 = c.post('/api/v1/db/read',json=para3,follow_redirects=True)
+                    url = 'http://54.83.164:5000/api/v1/db/read'
+                    resp3 = requests.post(url, data = para3)
+                
                     obj = resp3.get_json()
                     # print "-----------", obj
                     for elem in obj["rideid"]:
@@ -151,7 +157,9 @@ def add_ride():
                             "column" : ["srn","rideid","username"],
                             "insert"  : [rid,elem, un]
                         }
-                        resp2 = c.post('/api/v1/db/write',json=para4,follow_redirects=True)
+                       # resp2 = c.post('/api/v1/db/write',json=para4,follow_redirects=True)
+                       url = 'http://54.83.164:5000/api/v1/db/write'
+                       resp2 = requests.post(url, data = para4)
                 else:
                     return make_response("Destination does not exist", 400)
             else:
@@ -179,7 +187,9 @@ def add_ride():
         "column" : ["rideid","username","timestamp"],
         "where" :  "source = "+ src+" AND destination = "+dest
         }
-        response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+        #response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        response = requsts.post(url, data = para1)
 
         obj = response.get_json()
         if(obj): 
@@ -215,7 +225,9 @@ def get_task(task_id):
         "column" : ["rideid","username","timestamp","source","destination"],
         "where" :  "rideid = "+ str(task_id)
         }
-        resp1= c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+        #resp1= c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        resp1 = requests.post(url, data = para1)
         ride_obj = resp1.get_json()
     #    print "~~~~~~~~~", ride_obj
 
@@ -230,7 +242,9 @@ def get_task(task_id):
         "where" :  "rideid = "+ str(task_id)
         }
 
-        resp2 = c.post('/api/v1/db/read',json=para2,follow_redirects=True)
+#        resp2 = c.post('/api/v1/db/read',json=para2,follow_redirects=True)
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        resp2 = requests.post(url, data = para2)
         ride1_obj = resp2.get_json()
     #    print "---------", ride1_obj
     
@@ -259,7 +273,9 @@ def get_task(task_id):
         "column" : ["username"],
         "where" :  "rideid = "+ str(task_id)
         }
-        resp2= c.post('/api/v1/db/read',json=para2,follow_redirects=True)
+        #resp2= c.post('/api/v1/db/read',json=para2,follow_redirects=True)
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        resp2 = requests.post(url, data = para2)
         rideid1_obj = resp2.get_json()
         if(user1_obj and un in user1_obj): 
             if(rideid1_obj):
@@ -270,7 +286,9 @@ def get_task(task_id):
                     "column" : ["srn","rideid","username"],
                     "insert" : [rid,task_id,un]
                 }
-                resp2= c.post('/api/v1/db/write',json=para3,follow_redirects=True)
+                #resp2= c.post('/api/v1/db/write',json=para3,follow_redirects=True)
+                url = 'http://54.83.164:5000/api/v1/db/write'
+                resp2 = requests.post(url, data = para3)
                 return make_response("OK",200)
 
                 # ride1=join_user(srn =rid,rideid = task_id, username = un)
@@ -288,7 +306,10 @@ def get_task(task_id):
         "column" : ["rideid"],
         "where" :  "rideid = "+ str(task_id)
         }
-        response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+#        response = c.post('/api/v1/db/read',json=para1,follow_redirects=True
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        response = requests.post(url, data = para1)
+
         if(response.get_json()): 
             ride_details.query.filter(ride_details.rideid == str(task_id)).delete() 
             db.session.commit()
