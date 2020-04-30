@@ -180,7 +180,7 @@ if((master == -1)and(new_master==0)):
                 command = "python /code/worker.py",
                 volumes = {
                     '/var/run/docker.sock': {'bind':'/var/run/docker.sock', 'mode':'rw'},
-                    '/home/dpk/Desktop/FINALFINALFINAL/zook':{'bind':'/code', 'mode':'rw'}    
+                    '/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
                 },
                 network = "zook_default",
                 detach = True
