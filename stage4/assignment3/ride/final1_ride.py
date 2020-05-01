@@ -400,12 +400,19 @@ def delete():
     global count
     if(request.method=="POST"):
         count=count+1
-        ride_details.query.delete()
-        db.session.commit()
+        srn = randint(0,9999)
+        signal = {
+        "table" : "signal_table",
+        "column" : ["srn","cleardb_flag"],
+        "insert" : [srn,"1"]
+        }
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        res = requests.post(url, data = signal)
         return {},200
     else:
         count=count+1
         return make_response("405,Method Not Allowed",405)
+        
 #ride_details.query.delete()
 
 # @app.route("/api/v1/db/read",methods=["POST"])

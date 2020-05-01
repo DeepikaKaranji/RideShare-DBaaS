@@ -79,7 +79,10 @@ def list_users():
         }
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True,\
         #      environ_base={'REMOTE_ADDR': '127.0.0.1'})
-        response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+        # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        response = requests.post(url, data = para1)
+
         if(response.get_json()): 
             return "Key exists",400
         if len(ps)!=40:
@@ -97,7 +100,10 @@ def list_users():
         "column" : ["username","password"],
         "insert" : [un,ps]
         }
-        response = c.post('/api/v1/db/write',json=para,follow_redirects=True)
+        # response = c.post('/api/v1/db/write',json=para,follow_redirects=True)
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        response = requests.post(url, data = para)
+
         return make_response("{}", 201)
     else:
         count=count+1
@@ -117,7 +123,11 @@ def delete_user(user):
         "column" : ["username"],
         "where" :  "username = "+ user
         }
-        response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+        # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        response = requests.post(url, data = para1)
+    
+
         #user1= user_details.query.filter_by(username = user).first()
         if(response.get_json()): 
             res1 = user_details.query.filter(user_details.username == user).delete()
@@ -215,8 +225,14 @@ def delete():
     global count
     if(request.method=="POST"):
         count=count+1
-        user_details.query.delete()
-        db.session.commit()
+        srn = randint(0,9999)
+        signal = {
+        "table" : "signal_table",
+        "column" : ["srn","cleardb_flag"],
+        "insert" : [srn,"1"]
+        }
+        url = 'http://54.83.164:5000/api/v1/db/read'
+        res = requests.post(url, data = signal)
         return {},200
     else:
         count=count+1
