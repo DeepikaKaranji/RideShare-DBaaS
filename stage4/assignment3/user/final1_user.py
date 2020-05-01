@@ -80,7 +80,7 @@ def list_users():
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True,\
         #      environ_base={'REMOTE_ADDR': '127.0.0.1'})
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://54.159.82.160:5000/api/v1/db/read'
         response = requests.post(url, data = para1)
 
         if(response.get_json()): 
@@ -101,7 +101,7 @@ def list_users():
         "insert" : [un,ps]
         }
         # response = c.post('/api/v1/db/write',json=para,follow_redirects=True)
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://54.159.82.160:5000/api/v1/db/read'
         response = requests.post(url, data = para)
 
         return make_response("{}", 201)
@@ -124,7 +124,7 @@ def delete_user(user):
         "where" :  "username = "+ user
         }
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://54.159.82.160:5000/api/v1/db/read'
         response = requests.post(url, data = para1)
     
 
@@ -231,7 +231,7 @@ def delete():
         "column" : ["srn","cleardb_flag"],
         "insert" : [srn,"1"]
         }
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://54.159.82.160:5000/api/v1/db/read'
         res = requests.post(url, data = signal)
         return {},200
     else:
