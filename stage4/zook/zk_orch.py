@@ -10,6 +10,7 @@ import logging
 import subprocess
 import requests
 import threading 
+from flask_cors import CORS
 from kazoo.client import KazooClient
 from kazoo.client import KazooState
 logging.basicConfig()
@@ -17,6 +18,7 @@ logging.basicConfig()
 print("HI ORCH")
 
 app = Flask(__name__)
+CORS(app)
 flag = 0
 count = 0
 zk = KazooClient(hosts='zoo:2181',timeout=1.0)
@@ -192,6 +194,7 @@ def crash_slave():
 
 @app.route("/api/v1/db/write",methods=["POST"])
 def write_db():
+    content = request.json
     data = request.get_json()["insert"]
     cn = request.get_json()["column"]
     tn = request.get_json()["table"]
@@ -334,7 +337,7 @@ def check():
   
 
 
-@app.route("/api/v1/db/read",methods=["POST"])
+@app.route("/api/v1/db/read",methods=["GET","POST"])
 def read_db():
     global flag
     global count
@@ -348,8 +351,8 @@ def read_db():
     print("+++++++++++++++++")
     print("COUNT",count)
     print("+++++++++++++++++")
-
-
+    content = request.json
+    print("-----REQ GOT------------------", content['table'])
     data = request.get_json()["where"]
     cn = request.get_json()["column"]
     tn = request.get_json()["table"]
