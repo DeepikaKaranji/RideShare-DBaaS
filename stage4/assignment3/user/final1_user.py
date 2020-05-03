@@ -7,7 +7,10 @@ import time
 import json
 import sqlite3 as sqlite3
 import requests
+from flask_cors import CORS
+
 app = Flask(__name__)
+CORS(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user_db.db'
 db = SQLAlchemy(app)
@@ -77,14 +80,16 @@ def list_users():
         "column" : ["username","password"],
         "where" :  "username = "+ un
         }
+        
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True,\
         #      environ_base={'REMOTE_ADDR': '127.0.0.1'})
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
         url = 'http://54.159.82.160:5000/api/v1/db/read'
-        response = requests.post(url, data = para1)
+        response = requests.post(url, json = para1)
+        print("..............................................",response.json())
 
-        if(response.get_json()): 
-            return "Key exists",400
+        if(response): 
+            return make_response("Key exists",400)
         if len(ps)!=40:
             #return jsonify("Password is not of type SHA1 hash hex"),400
             return make_response("Password not SHA1",400)
@@ -101,8 +106,8 @@ def list_users():
         "insert" : [un,ps]
         }
         # response = c.post('/api/v1/db/write',json=para,follow_redirects=True)
-        url = 'http://54.159.82.160:5000/api/v1/db/read'
-        response = requests.post(url, data = para)
+        url = 'http://54.159.82.160:5000/api/v1/db/write'
+        response = requests.post(url, json = para)
 
         return make_response("{}", 201)
     else:

@@ -1,3 +1,4 @@
 Flask
 Flask-SQLAlchemy
 requests==2.8.1
+flask-cors
