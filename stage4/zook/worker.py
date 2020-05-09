@@ -11,7 +11,7 @@ import os
 import time
 import subprocess
 import threading 
-
+import sqlite3 as sqlite3
 from kazoo.client import KazooClient
 from kazoo.client import KazooState
 logging.basicConfig()
