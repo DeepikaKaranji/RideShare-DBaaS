@@ -172,6 +172,7 @@ if(master == -1):
         tn = x["table"]
         print("________________", data,cn,tn)
         if(data == "fetchall"):
+            print("FETCHING ALL USERS----------")
             conn = sqlite3.connect('user_db.db')
             conn.row_factory = dict_factory
             cur = conn.cursor()
@@ -181,7 +182,7 @@ if(master == -1):
             return make_response(jsonify(flatList), 200)
 
         else:
-
+            print("NOT FETCH----------")
             tn=eval(tn) 
             new_user=tn()
             result = data.find('AND') 
