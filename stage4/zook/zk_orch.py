@@ -369,9 +369,9 @@ def read_db():
     result = test_rpc.call(test)
     print("RPC is %r" %result)
     result = result.decode("utf8")
-    print("RESULT TYPE^^^^^^^^^^^^^^^", type(result))
+    print("RESULT TYPE--------------", type(jsonify(result)))
     connection.close()
-    return make_response(result,200)
+    return make_response(jsonify(result),200)
 
 if __name__ == "__main__":
     app.debug=True

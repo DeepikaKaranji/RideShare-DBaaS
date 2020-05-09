@@ -100,7 +100,7 @@ def list_users():
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
         url = 'http://52.23.7.221:5000/api/v1/db/read'
         response = requests.post(url, json = para1)
-        print("......response.........",response )
+        # print("......response.........",response )
         print("......response type.........",type(response ))
         print("..............................................",response.json())
 
