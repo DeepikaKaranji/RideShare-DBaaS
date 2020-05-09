@@ -99,7 +99,7 @@ def list_users():
         response = requests.post(url, json = para1)
         print("..............................................",response.json())
 
-        if(response.json): 
+        if(len(response.json)!=0): 
             return make_response("Key exists",400)
         if len(ps)!=40:
             #return jsonify("Password is not of type SHA1 hash hex"),400
