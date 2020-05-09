@@ -249,48 +249,59 @@ if((master == -1)and(new_master==0)):
         cn = x["column"]
         tn = x["table"]
         print(data,cn,tn)
-        tn=eval(tn) 
-        new_user=tn()
-        result = data.find('AND') 
-        if(result==-1):
-            ind = data.find('=')
-            att = data[:ind-1]
-            val = data[ind+2:]
-            x = getattr(tn, att)
-            user1= tn.query.filter((x == val)).all()
-            d = {}
-            for i in user1:
-                cnt = 0
-                for j in cn:
-                    if j not in d:
-                        d[j] =[]
-                        cnt =cnt+1
-                    a = getattr(i, j)
-                    d[j].append(a)
-        
+        if(data == "fetchall"):
+            print("FETCHING ALL USERS----------")
+            conn = sqlite3.connect('user_db.db')
+            conn.row_factory = dict_factory
+            cur = conn.cursor()
+            all = cur.execute("SELECT username FROM user_details;").fetchall()
+            print "length of flatlist ----------------", len(flatList)
+            flatList = [ item for elem in all for item in elem]
+            return make_response(jsonify(flatList), 200)
         else:
-            q1 = data[:result-1]
-            q2 = data[result+4:]
-            i1 = q1.find('=')
-            a1 = q1[:i1-1]
-            v1 = q1[i1+2:]
-            x1 = getattr(tn, a1)
-            i2 = q2.find('=')
-            a2 = q2[:i2-1]
-            v2 = q2[i2+2:]
-            x2 = getattr(tn, a2)
-            user1= tn.query.filter(x1 == v1).filter(x2 == v2).all()
-            d = {}
-            for i in user1:	
-                cnt = 0
-                for j in cn:
-                    if j not in d:
-                        d[j] =[]
-                        cnt =cnt+1
-                    a = getattr(i, j)
-                    d[j].append(a)
-        return d
-        ch.basic_ack(delivery_tag = method.delivery_tag) 
+            print("NOT FETCH----------")
+            tn=eval(tn) 
+            new_user=tn()
+            result = data.find('AND') 
+            if(result==-1):
+                ind = data.find('=')
+                att = data[:ind-1]
+                val = data[ind+2:]
+                x = getattr(tn, att)
+                user1= tn.query.filter((x == val)).all()
+                d = {}
+                for i in user1:
+                    cnt = 0
+                    for j in cn:
+                        if j not in d:
+                            d[j] =[]
+                            cnt =cnt+1
+                        a = getattr(i, j)
+                        d[j].append(a)
+            
+            else:
+                q1 = data[:result-1]
+                q2 = data[result+4:]
+                i1 = q1.find('=')
+                a1 = q1[:i1-1]
+                v1 = q1[i1+2:]
+                x1 = getattr(tn, a1)
+                i2 = q2.find('=')
+                a2 = q2[:i2-1]
+                v2 = q2[i2+2:]
+                x2 = getattr(tn, a2)
+                user1= tn.query.filter(x1 == v1).filter(x2 == v2).all()
+                d = {}
+                for i in user1:	
+                    cnt = 0
+                    for j in cn:
+                        if j not in d:
+                            d[j] =[]
+                            cnt =cnt+1
+                        a = getattr(i, j)
+                        d[j].append(a)
+            return d
+            ch.basic_ack(delivery_tag = method.delivery_tag) 
      
 
     def on_request(ch, method, props, body):
