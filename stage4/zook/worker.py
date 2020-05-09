@@ -239,6 +239,11 @@ if((master == -1)and(new_master==0)):
                 setattr(new_user, c1, data1)
             db.session.add(new_user)
             db.session.commit()        
+    def dict_factory(cursor, row):
+        d = {}
+        for idx, col in enumerate(cursor.description):
+            d[col[0]] = row[idx]
+        return d.values()
 
     def callback_read(x): 
         print(" [x] Received IN READ%r" % x)
