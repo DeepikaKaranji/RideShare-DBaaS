@@ -120,6 +120,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///'+str(pid)+'.db'
 db = SQLAlchemy(app)
+tabnam = str(pid)+'.db'
 
 class user_details(db.Model):
     username = db.Column(db.String(80), primary_key=True)
@@ -256,7 +257,7 @@ if((master == -1)and(new_master==0)):
         print(data,cn,tn)
         if(data == "fetchall"):
             print("FETCHING ALL USERS----------")
-            conn = sqlite3.connect('user_db.db')
+            conn = sqlite3.connect(tabnam)
             conn.row_factory = dict_factory
             cur = conn.cursor()
             all = cur.execute("SELECT username FROM user_details;").fetchall()
