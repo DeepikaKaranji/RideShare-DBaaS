@@ -255,7 +255,7 @@ if((master == -1)and(new_master==0)):
             conn.row_factory = dict_factory
             cur = conn.cursor()
             all = cur.execute("SELECT username FROM user_details;").fetchall()
-            print "length of flatlist ----------------", len(flatList)
+            print ("length of flatlist ----------------"), len(flatList)
             flatList = [ item for elem in all for item in elem]
             return make_response(jsonify(flatList), 200)
         else:
