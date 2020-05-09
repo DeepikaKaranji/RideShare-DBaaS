@@ -61,13 +61,24 @@ def list_users():
         print("---------------user list api------------")
         count=count+1
         # a = user_details.query.filter(user_details.username).all()
-        conn = sqlite3.connect('user_db.db')
-        conn.row_factory = dict_factory
-        cur = conn.cursor()
-        all = cur.execute("SELECT username FROM user_details;").fetchall()
+
+        para0 =  {
+        "table"  : "user_details",
+	    "column" : ["username"],
+        "where"  : "fetchall"
+        }
+        url = 'http://52.23.7.221:5000/api/v1/db/read'
+        response = requests.post(url, json = para0)
+        all = response.json()
+        print("*********** ALL", all)
         flatList = [ item for elem in all for item in elem]
-        # print "lenght mofo ----------------", len(flatList)
         return make_response(jsonify(flatList), 200)
+
+        # conn = sqlite3.connect('user_db.db')
+        # conn.row_factory = dict_factory
+        # cur = conn.cursor()
+        # all = cur.execute("SELECT username FROM user_details;").fetchall()
+        # print "lenght mofo ----------------", len(flatList)
     if(request.method=="PUT"):
         cps =['1','0','2','3','4','5','6','7','8','9','a','b','c','d','e','f','A','B','C','D','E','F']
         # print(" ------------------- create user api -------------------")
@@ -88,7 +99,7 @@ def list_users():
         response = requests.post(url, json = para1)
         print("..............................................",response.json())
 
-        if(response): 
+        if(response.json): 
             return make_response("Key exists",400)
         if len(ps)!=40:
             #return jsonify("Password is not of type SHA1 hash hex"),400
