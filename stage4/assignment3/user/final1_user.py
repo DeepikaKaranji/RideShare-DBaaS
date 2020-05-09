@@ -69,8 +69,11 @@ def list_users():
         }
         url = 'http://52.23.7.221:5000/api/v1/db/read'
         response = requests.post(url, json = para0)
+        print("*******RESPONSE",response)
+        print("**********, TYPE OF RESPONSE", type(response))
         all = response.json()
         print("*********** ALL", all)
+        print("********** TYPE OF ALL", type(all))
         flatList = [ item for elem in all for item in elem]
         return make_response(jsonify(flatList), 200)
 
@@ -99,7 +102,7 @@ def list_users():
         response = requests.post(url, json = para1)
         print("..............................................",response.json())
 
-        if(len(response.json)!=0): 
+        if(len(response.json())!=0): 
             return make_response("Key exists",400)
         if len(ps)!=40:
             #return jsonify("Password is not of type SHA1 hash hex"),400
