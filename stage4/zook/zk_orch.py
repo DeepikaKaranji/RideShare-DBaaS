@@ -368,9 +368,10 @@ def read_db():
     test_rpc = TestRpcClient()
     result = test_rpc.call(test)
     print("RPC is %r" %result)
+    result = result.decode("utf8")
     print("RESULT TYPE^^^^^^^^^^^^^^^", type(result))
     connection.close()
-    return result,200
+    return make_response(result,200)
 
 if __name__ == "__main__":
     app.debug=True
