@@ -101,7 +101,7 @@ def list_users():
         url = 'http://52.23.7.221:5000/api/v1/db/read'
         response = requests.post(url, json = para1)
         # print("......response.........",response )
-        print("......response testing.........",response.json())
+        print("......response testing.........",not response.json())
         print("..............................................",len(response.json()))
 
         if(len(response.json())!=0): 
