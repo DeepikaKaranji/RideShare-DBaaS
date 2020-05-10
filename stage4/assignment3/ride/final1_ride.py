@@ -120,7 +120,7 @@ def add_ride():
         headers = {'Origin': '54.173.81.6'}
         resp0 = requests.get('http://hopelb-1353512799.us-east-1.elb.amazonaws.com/api/v1/users', headers = headers)
         resp0 = resp0.json()
-
+        print("resp0------------------", un in resp0)
         if(resp0 and un in resp0):
             rid = randint(0,9999)
             if((src>0)and(src<199)):
@@ -132,20 +132,21 @@ def add_ride():
                             "insert" : [rid,un,ts,src,dest]
                     }
                     #resp2 = c.post('/api/v1/db/write',json=para2,follow_redirects=True)
-                    url = 'http:/52.203.199.62:5000/api/v1/db/write'
-                    resp2 = requests.post(url, data = para2)
-                    
-                    para3 = {
-                        "table": "ride_details",
+                    url = 'http://52.203.199.62:5000/api/v1/db/write'
+                    resp2 = requests.post(url, json = para2)
+                    print("WRITE DONEEEEE", resp2)
+                    para3 = { "table": "ride_details",
                         "column":["rideid"],
                         "where":"username = "+un
                     }
                     
                     #resp3 = c.post('/api/v1/db/read',json=para3,follow_redirects=True)
                     url = 'http://52.203.199.62:5000/api/v1/db/read'
-                    resp3 = requests.post(url, data = para3)
-                
-                    obj = resp3.get_json()
+                    resp3 = requests.post(url,json = para3)
+                    resp3 = resp3.text
+                    resp3= resp3.encode("ascii", "ignore")
+                    obj = json.dumps(resp3)
+                    #print("OBJJJJJJJJ------", obj, type(obj))
                     #global rid
                     # print "-----------", obj
                     for elem in obj["rideid"]:
@@ -159,7 +160,7 @@ def add_ride():
                         }
                        # resp2 = c.post('/api/v1/db/write',json=para4,follow_redirects=True)
                         url = 'http://52.203.199.62:5000/api/v1/db/write'
-                        resp2 = requests.post(url, data = para4)
+                        resp2 = requests.post(url, json = para4)
                 else:
                     return make_response("Destination does not exist", 400)
             else:
