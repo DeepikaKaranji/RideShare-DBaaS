@@ -239,8 +239,11 @@ def get_task(task_id):
         }
         #resp1= c.post('/api/v1/db/read',json=para1,follow_redirects=True)
         url = 'http://52.203.199.62:5000/api/v1/db/read'
-        resp1 = requests.post(url, data = para1)
-        ride_obj = resp1.get_json()
+        resp1 = requests.post(url, json  = para1)
+        ride_obj = resp1.text
+        ride_obj = ride_obj.encode("ascii","ignore")
+        ride_obj = eval(ride_obj)
+        print("^^^^^^^^^^^^^",ride_obj)
     #    print "~~~~~~~~~", ride_obj
 
         ride_dict = {}
@@ -256,8 +259,10 @@ def get_task(task_id):
 
 #        resp2 = c.post('/api/v1/db/read',json=para2,follow_redirects=True)
         url = 'http://52.203.199.62:5000/api/v1/db/read'
-        resp2 = requests.post(url, data = para2)
-        ride1_obj = resp2.get_json()
+        resp2 = requests.post(url, json = para2)
+        ride1_obj = resp2.text
+        ride1_obj = ride1_obj.encode("ascii","ignore")
+        ride1_obj = eval(ride1_obj)
     #    print "---------", ride1_obj
     
       #  res= ride1_obj["username"]
