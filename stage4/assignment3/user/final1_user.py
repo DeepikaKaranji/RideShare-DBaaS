@@ -64,7 +64,7 @@ def list_users():
 
         para0 =  {
         "table"  : "user_details",
-	    "column" : ["username"],
+	    "column" : ["password","username"],
         "where"  : "fetchall"
         }
         url = 'http://52.203.199.62:5000/api/v1/db/read'
@@ -99,7 +99,7 @@ def list_users():
         print("......response testing.........",response.json())
         print("..............................................",len(response.json()))
 
-        if(json.dumps(response.json())!='"{}"'): 
+        if(json.dumps(response.json())!='{}'): 
             return make_response("Key exists",400)
         if len(ps)!=40:
             #return jsonify("Password is not of type SHA1 hash hex"),400
