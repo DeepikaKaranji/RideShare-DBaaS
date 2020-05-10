@@ -62,7 +62,7 @@ def delete_microservice_ride():
     }
     # print "PARA 1 --------", para1
     #response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
-    url = 'http://54.83.164:5000/api/v1/db/read'
+    url = 'http://52.203.199.62:5000/api/v1/db/read'
     response = requests.post(url, data = para1)
     if(response.get_json()): 
         ride_details.query.filter(ride_details.username == user).delete()
@@ -117,22 +117,22 @@ def add_ride():
         # resp0 = requests.get('http://127.0.0.1:5000/users/api/v1/users')
         
         #resp0 = requests.get('http://171.19.0.2:80/api/v1/users')
-        headers = {'Origin': '34.224.123.243'}
-        resp0 = requests.get('http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/users', headers = headers)
+        headers = {'Origin': '54.173.81.6'}
+        resp0 = requests.get('http://hopelb-1353512799.us-east-1.elb.amazonaws.com/api/v1/users', headers = headers)
         resp0 = resp0.json()
 
         if(resp0 and un in resp0):
             rid = randint(0,9999)
             if((src>0)and(src<199)):
                 if((dest>0)and(dest<199)):
-                    c = app.test_client()
+                    #c = app.test_client()
                     para2 = {
                             "table"  : "ride_details",
                             "column" : ["rideid","username","timestamp","source","destination"],
                             "insert" : [rid,un,ts,src,dest]
                     }
                     #resp2 = c.post('/api/v1/db/write',json=para2,follow_redirects=True)
-                    url = 'http://54.83.164:5000/api/v1/db/write'
+                    url = 'http:/52.203.199.62:5000/api/v1/db/write'
                     resp2 = requests.post(url, data = para2)
                     
                     para3 = {
@@ -142,7 +142,7 @@ def add_ride():
                     }
                     
                     #resp3 = c.post('/api/v1/db/read',json=para3,follow_redirects=True)
-                    url = 'http://54.83.164:5000/api/v1/db/read'
+                    url = 'http://52.203.199.62:5000/api/v1/db/read'
                     resp3 = requests.post(url, data = para3)
                 
                     obj = resp3.get_json()
@@ -158,7 +158,7 @@ def add_ride():
                             "insert"  : [rid,elem, un]
                         }
                        # resp2 = c.post('/api/v1/db/write',json=para4,follow_redirects=True)
-                        url = 'http://54.83.164:5000/api/v1/db/write'
+                        url = 'http://52.203.199.62:5000/api/v1/db/write'
                         resp2 = requests.post(url, data = para4)
                 else:
                     return make_response("Destination does not exist", 400)
@@ -188,7 +188,7 @@ def add_ride():
         "where" :  "source = "+ src+" AND destination = "+dest
         }
         #response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://52.203.199.62:5000/api/v1/db/read'
         response = requsts.post(url, data = para1)
 
         obj = response.get_json()
@@ -226,7 +226,7 @@ def get_task(task_id):
         "where" :  "rideid = "+ str(task_id)
         }
         #resp1= c.post('/api/v1/db/read',json=para1,follow_redirects=True)
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://52.203.199.62:5000/api/v1/db/read'
         resp1 = requests.post(url, data = para1)
         ride_obj = resp1.get_json()
     #    print "~~~~~~~~~", ride_obj
@@ -243,7 +243,7 @@ def get_task(task_id):
         }
 
 #        resp2 = c.post('/api/v1/db/read',json=para2,follow_redirects=True)
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://52.203.199.62:5000/api/v1/db/read'
         resp2 = requests.post(url, data = para2)
         ride1_obj = resp2.get_json()
     #    print "---------", ride1_obj
@@ -263,8 +263,8 @@ def get_task(task_id):
 
         c = app.test_client()
         # user1= user_details.query.filter_by(username = un).first()
-        headers = {'Origin': '34.224.123.243'}
-        resp1 = requests.get('http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/users', headers = headers)
+        headers = {'Origin': '54.173.81.6'}
+        resp1 = requests.get('http://hopelb-1353512799.us-east-1.elb.amazonaws.com/api/v1/users', headers = headers)
         user1_obj = resp1.json()
 
         # rideid1=ride_details.query.filter_by(rideid =task_id).first()
@@ -274,7 +274,7 @@ def get_task(task_id):
         "where" :  "rideid = "+ str(task_id)
         }
         #resp2= c.post('/api/v1/db/read',json=para2,follow_redirects=True)
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://52.203.199.62:5000/api/v1/db/read'
         resp2 = requests.post(url, data = para2)
         rideid1_obj = resp2.get_json()
         if(user1_obj and un in user1_obj): 
@@ -287,7 +287,7 @@ def get_task(task_id):
                     "insert" : [rid,task_id,un]
                 }
                 #resp2= c.post('/api/v1/db/write',json=para3,follow_redirects=True)
-                url = 'http://54.83.164:5000/api/v1/db/write'
+                url = 'http://52.203.199.62:5000/api/v1/db/write'
                 resp2 = requests.post(url, data = para3)
                 return make_response("OK",200)
 
@@ -307,7 +307,7 @@ def get_task(task_id):
         "where" :  "rideid = "+ str(task_id)
         }
 #        response = c.post('/api/v1/db/read',json=para1,follow_redirects=True
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://52.203.199.62:5000/api/v1/db/read'
         response = requests.post(url, data = para1)
 
         if(response.get_json()): 
@@ -321,80 +321,7 @@ def get_task(task_id):
         return make_response("405,Method Not Allowed",405)
 
 
-###############################################TASK 8################################################
-
-@app.route("/api/v1/db/write",methods=["POST"])
-def write_db():
-    data = request.get_json()["insert"]
-    cn = request.get_json()["column"]
-    tn = request.get_json()["table"]
-    tn=eval(tn) 
-    new_user=tn()
-    for i in range(len(data)):
-        data1 = data[i]
-        c1 = cn[i]
-        setattr(new_user, c1, data1)
-    db.session.add(new_user)
-    db.session.commit()
-    return {},200
-
-###############################################TASK 9################################################
-@app.route("/api/v1/db/read",methods=["POST"])
-def read_db():
-    # print "-------------- ride api 9 ---------------------"
-    data = request.get_json()["where"]
-    cn = request.get_json()["column"]
-    tn = request.get_json()["table"]
-    tn=eval(tn) 
-    new_user=tn()
-    result = data.find('AND') 
-    if(result==-1):
-        ind = data.find('=')
-        att = data[:ind-1]
-        val = data[ind+2:]
-        x = getattr(tn, att)
-        user1= tn.query.filter((x == val)).all()
-        d = {}
-        for i in user1:
-            cnt = 0
-            for j in cn:
-                if j not in d:
-                    d[j] =[]
-                    cnt =cnt+1
-                a = getattr(i, j)
-                d[j].append(a)
-        return jsonify(d)
-        return {}
-
-    else:
-        q1 = data[:result-1]
-        q2 = data[result+4:]
-        i1 = q1.find('=')
-        a1 = q1[:i1-1]
-        v1 = q1[i1+2:]
-        x1 = getattr(tn, a1)
-        i2 = q2.find('=')
-        a2 = q2[:i2-1]
-        v2 = q2[i2+2:]
-        x2 = getattr(tn, a2)
-        #user1= tn.query.filter((x1 == v1)&(x2 == v2)).all()
-        user1= tn.query.filter(x1 == v1).filter(x2 == v2).all()
-        # print user1
-        d = {}
-        for i in user1:
-            cnt = 0
-            for j in cn:
-                if j not in d:
-                    d[j] =[]
-                    cnt =cnt+1
-                a = getattr(i, j)
-                d[j].append(a)
-        return jsonify(d)
-        return {}   
-
-
-
-##############################  CLEAR DB #########################
+####################################  CLEAR DB #########################
 @app.route("/api/v1/db/clear",methods=meth)
 def delete():
     global count
@@ -404,9 +331,9 @@ def delete():
         signal = {
         "table" : "signal_table",
         "column" : ["srn","cleardb_flag"],
-        "insert" : [srn,"1"]
+        "insert" : [str(srn),"1"]
         }
-        url = 'http://54.83.164:5000/api/v1/db/read'
+        url = 'http://52.203.199.62/api/v1/db/read'
         res = requests.post(url, data = signal)
         return {},200
     else:
