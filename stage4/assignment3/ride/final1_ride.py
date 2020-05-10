@@ -197,9 +197,12 @@ def add_ride():
         }
         #response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
         url = 'http://52.203.199.62:5000/api/v1/db/read'
-        response = requsts.post(url, data = para1)
+        response = requests.post(url, json = para1)
 
-        obj = response.get_json()
+        obj = response.text
+        obj = obj.encode("ascii","ignore")
+        obj= eval(obj)
+       # print(obj,type(obj))
         if(obj): 
             i = 0
             for i in range(len(obj['username'])):
@@ -212,6 +215,7 @@ def add_ride():
                     - datetime.strptime(curr_time,'%d-%m-%Y:%S-%M-%H')
                 if(tdelta.days >-1 and tdelta.seconds>0):
                     final.append(record)
+            print("&&&&&&&&&&&&&",final)
             return json.dumps(final)
         else:
             return make_response("Ride Id does not exist", 400)    
