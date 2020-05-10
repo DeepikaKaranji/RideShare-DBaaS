@@ -275,7 +275,7 @@ if((master == -1)and(new_master==0)):
                 print ("all ----------------", all)
                 flatlist = [ item for elem in all for item in elem]
                 print ("---flatlist---", flatlist)
-                return make_response(jsonify(flatlist), 200)
+                return make_response(json.dumps(flatlist), 200)
         else:
             print("NOT FETCH----------")
             tn=eval(tn) 
