@@ -371,7 +371,7 @@ def read_db():
     result = result.decode("utf8")
     print("RESULT TYPE--------------", (json.dumps(result)))
     connection.close()
-    return make_response(json.dumps(result),200)
+    return result
 
 if __name__ == "__main__":
     app.debug=True
