@@ -256,15 +256,26 @@ if((master == -1)and(new_master==0)):
         tn = x["table"]
         print(data,cn,tn)
         if(data == "fetchall"):
-            print("FETCHING ALL USERS----------")
+            
             with app.app_context():
+                print("FETCHING ALL USERS----------")
+                # flatlist = []
+                # tn = eval(tn)
+                # userlist = tn.query.all()
+                # print("---------usrlist--", \
+                #     userlist, "--type--", type(userlist[0]))
+
+                # for user in userlist:
+                #     print("--user--", user,"--type--", type(user)) <user_details aaa>
+                #     flatlist.append(user)
                 conn = sqlite3.connect(dbname)
                 conn.row_factory = dict_factory
                 cur = conn.cursor()
                 all = cur.execute("SELECT username FROM user_details;").fetchall()
                 print ("all ----------------", all)
-                flatList = [ item for elem in all for item in elem]
-                return make_response(jsonify(flatList), 200)
+                flatlist = [ item for elem in all for item in elem]
+                print ("---flatlist---", flatlist)
+                return make_response(jsonify(flatlist), 200)
         else:
             print("NOT FETCH----------")
             tn=eval(tn) 

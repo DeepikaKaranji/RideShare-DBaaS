@@ -74,14 +74,9 @@ def list_users():
         all = response.json()
         print("*********** ALL", all)
         print("********** TYPE OF ALL", type(all))
-        flatList = [ item for elem in all for item in elem]
-        return make_response(jsonify(flatList), 200)
 
-        # conn = sqlite3.connect('user_db.db')
-        # conn.row_factory = dict_factory
-        # cur = conn.cursor()
-        # all = cur.execute("SELECT username FROM user_details;").fetchall()
-        # print "lenght mofo ----------------", len(flatList)
+        return make_response(all, 200)
+
     if(request.method=="PUT"):
         cps =['1','0','2','3','4','5','6','7','8','9','a','b','c','d','e','f','A','B','C','D','E','F']
         # print(" ------------------- create user api -------------------")

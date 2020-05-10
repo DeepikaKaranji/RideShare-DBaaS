@@ -369,7 +369,7 @@ def read_db():
     result = test_rpc.call(test)
     print("RPC is %r" %result)
     result = result.decode("utf8")
-    print("RESULT TYPE--------------", type(json.dumps(result)))
+    print("RESULT TYPE--------------", (json.dumps(result)))
     connection.close()
     return make_response(json.dumps(result),200)
 
