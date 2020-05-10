@@ -45,7 +45,7 @@ def dict_factory(cursor, row):
 def list_users():
     global count
     if(request.method=="GET"):
-        print("*******************", request.headers)
+        print("*******GET METHOD LIST USR************", request.headers)
         print("---------------user list api------------")
         count=count+1
         # a = user_details.query.filter(user_details.username).all()
@@ -119,32 +119,44 @@ def list_users():
 def delete_user(user):
     global count
     if(request.method=="DELETE"):
-        # print(" ------------------- delete user api --------------------")
+        #print(" ------------------- delete user api --------------------")
         count=count+1
         c = app.test_client()
         para1 = {
         "table"  : "user_details",
-        "column" : ["username"],
+        "column" : ["username", "password"],
         "where" :  "username = "+ user
         }
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
         url = 'http://52.203.199.62:5000/api/v1/db/read'
         response = requests.post(url, json = para1)
-    
+        res = response.text
+        res = res.encode("ascii","ignore")
+        print("----------RESPONSE-------", res)
+       # print("------responsedump---------", json.dumps(response.json()))
 
         #user1= user_details.query.filter_by(username = user).first()
-        if(response.get_json()): 
-            res1 = user_details.query.filter(user_details.username == user).delete()
-            db.session.commit()
+        if(res!='{}'): 
+            #res1 = user_details.query.filter(user_details.username == user).delete()
+            #db.session.commit()
             #payload = {"user":user}
             #print("PAYLOAD--------------- ", payload)
-            url = 'http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/rides/custom?username='+user
-            res2 = requests.get(url)
+            para6 = {
+            "table" : "user_details",
+            "column" : "DELETE",
+            "insert" : "username = " + user
+
+            }
+            url = 'http://52.203.199.62:5000/api/v1/db/write'
+            response = requests.post(url, json = para6)
+            print("THIS SHOULDNT BE COMMENTED!!!")
+            #url = 'http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/rides/custom?username='+user
+            #res2 = requests.get(url)
     #       res2 = requests.post('http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/rides/custom', params = payload)
             db.session.commit()
-
-            if(res1):
-                return make_response("{}",200) 
+            return make_response("{}",200)
+            #if(res1):
+             #   return make_response("{}",200) 
         else:
             return make_response("Username does not exist",400)
     else:
