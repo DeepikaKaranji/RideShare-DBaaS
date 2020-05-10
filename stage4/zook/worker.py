@@ -233,13 +233,32 @@ if((master == -1)and(new_master==0)):
 
         else:
             tn=eval(tn) 
-            new_user=tn()
-            for i in range(len(data)):
-                data1 = data[i]
-                c1 = cn[i]
-                setattr(new_user, c1, data1)
-            db.session.add(new_user)
-            db.session.commit()        
+            #print("DATA",data)
+            actdata = ""
+            for i in data:
+                actdata = actdata+i
+            actcn = ""
+            for i in cn:
+                actcn = actcn+i
+            #print("CN",cn)
+            #print("DATA",actdata)
+            #print("cn",actcn)
+            if(actcn == "DELETE"):
+                #print("INSSSIIIIIIIIDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEE")
+                if('username' in actdata):
+                    ind = actdata.find("=")
+                    user = actdata[ind+2:]
+                    res1 = tn.query.filter(tn.username == user).delete()
+                    db.session.commit()
+
+            else:
+                new_user=tn()
+                for i in range(len(data)):
+                    data1 = data[i]
+                    c1 = cn[i]
+                    setattr(new_user, c1, data1)
+                db.session.add(new_user)
+                db.session.commit()        
     def dict_factory(cursor, row):
         d = {}
         for idx, col in enumerate(cursor.description):
@@ -373,13 +392,32 @@ else:
 
         else:
             tn=eval(tn) 
-            new_user=tn()
-            for i in range(len(data)):
-                data1 = data[i]
-                c1 = cn[i]
-                setattr(new_user, c1, data1)
-            db.session.add(new_user)
-            db.session.commit()
+            #print("DATA",data)
+            actdata = ""
+            for i in data:
+                actdata = actdata+i
+            actcn = ""
+            for i in cn:
+                actcn = actcn+i
+            #print("CN",cn)
+            #print("DATA",actdata)
+            #print("cn",actcn)
+            if(actcn == "DELETE"):
+                #print("INSSSIIIIIIIIDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEE")
+                if('username' in actdata):
+                    ind = actdata.find("=")
+                    user = actdata[ind+2:]
+                    res1 = tn.query.filter(tn.username == user).delete()
+                    db.session.commit()
+            else:
+                new_user=tn()
+                for i in range(len(data)):
+                    data1 = data[i]
+                    c1 = cn[i]
+                    setattr(new_user, c1, data1)
+                db.session.add(new_user)
+                db.session.commit()
+
         ch.basic_ack(delivery_tag = method.delivery_tag)
         channel.exchange_declare(exchange='logs',
                          exchange_type='fanout')
