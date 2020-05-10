@@ -75,7 +75,7 @@ def list_users():
         print("*********** ALL", all)
         print("********** TYPE OF ALL", type(all))
 
-        return make_response(all, 200)
+        return make_response(json.dumps(all), 200)
 
     if(request.method=="PUT"):
         cps =['1','0','2','3','4','5','6','7','8','9','a','b','c','d','e','f','A','B','C','D','E','F']
