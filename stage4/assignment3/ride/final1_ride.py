@@ -23,19 +23,6 @@ db = SQLAlchemy(app)
 # app.logger.info("USER MICROSERVICE", userMicroService)
 
 
-class ride_details(db.Model):
-    rideid = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80))
-    timestamp = db.Column(db.String(80))
-    source = db.Column(db.Integer)
-    destination = db.Column(db.Integer)
-class join_user(db.Model):
-    srn= db.Column(db.Integer,primary_key=True)
-    rideid = db.Column(db.Integer)
-    username = db.Column(db.String(80))
-
-db.create_all()
-
 rid = 1
 count = 0
 meth = ["VIEW", "GET","PUT","POST","DELETE","HEAD","OPTIONS","PATCH","CONNECT","PURGE","LOCK","LINK","UNLINK","UNLOCK","COPY","PROPFIND"]
@@ -93,7 +80,18 @@ def get_count():
         global count 
         count =count+1
         cnt=[]
-        ride= ride_details.query.filter(ride_details.rideid).count()
+        para6 = {
+            "table" : "COUNT",
+            "column" : "COUNT",
+            "where" : "count_ride"
+
+        }
+        url = 'http://52.203.199.62:5000/api/v1/db/read'
+        response = requests.post(url, json = para6)
+        response = response.text
+        ride= response.encode("ascii", "ignore")
+        print("RESPONSE COUNT",ride)
+        #ride= ride_details.query.filter(ride_details.rideid).count()
         cnt.append(ride)
         return make_response(json.dumps(cnt), 200)
     # return jsonify(count)
@@ -106,6 +104,7 @@ def get_count():
 @app.route("/api/v1/rides",methods=meth)
 def add_ride():
     global count
+    global rid
     if(request.method=="POST"):
         count=count+1
         # print "-----------ride api 3-----------"
@@ -147,9 +146,10 @@ def add_ride():
                     resp3 = requests.post(url, data = para3)
                 
                     obj = resp3.get_json()
+                    #global rid
                     # print "-----------", obj
                     for elem in obj["rideid"]:
-                        global rid
+                        #global rid
                         rid=rid+1
                         
                         para4 = {
@@ -158,8 +158,8 @@ def add_ride():
                             "insert"  : [rid,elem, un]
                         }
                        # resp2 = c.post('/api/v1/db/write',json=para4,follow_redirects=True)
-                       url = 'http://54.83.164:5000/api/v1/db/write'
-                       resp2 = requests.post(url, data = para4)
+                        url = 'http://54.83.164:5000/api/v1/db/write'
+                        resp2 = requests.post(url, data = para4)
                 else:
                     return make_response("Destination does not exist", 400)
             else:
