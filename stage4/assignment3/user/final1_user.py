@@ -15,18 +15,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user_db.db'
 db = SQLAlchemy(app)
 
-
-class user_details(db.Model):
-    username = db.Column(db.String(80), primary_key=True)
-    password = db.Column(db.String(80))
-
-class join_user(db.Model):
-    srn= db.Column(db.Integer,primary_key=True)
-    rideid = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80),primary_key=True)
-
-db.create_all()
-
 count = 0
 final=[]
 meth = ["VIEW", "GET","PUT","POST","DELETE","HEAD","OPTIONS","PATCH","CONNECT","PURGE","LOCK","LINK","UNLINK","UNLOCK","COPY","PROPFIND"]
@@ -163,77 +151,6 @@ def delete_user(user):
         count=count+1
         return make_response("405,Method Not Allowed",405)
 
-###############################################TASK 8################################################
-
-@app.route("/api/v1/db/write",methods=["POST"])
-def write_db():
-    data = request.get_json()["insert"]
-    cn = request.get_json()["column"]
-    tn = request.get_json()["table"]
-    tn=eval(tn) 
-    new_user=tn()
-    for i in range(len(data)):
-        data1 = data[i]
-        c1 = cn[i]
-        setattr(new_user, c1, data1)
-    db.session.add(new_user)
-    db.session.commit()
-    return {},200
-
-###############################################TASK 9################################################
-    
-@app.route("/api/v1/db/read",methods=["POST"])
-def read_db():
-    # print "-------------- user api 9 ---------------------"
-    data = request.get_json()["where"]
-    cn = request.get_json()["column"]
-    tn = request.get_json()["table"]
-    tn=eval(tn) 
-    new_user=tn()
-    result = data.find('AND') 
-    if(result==-1):
-        ind = data.find('=')
-        att = data[:ind-1]
-        val = data[ind+2:]
-        x = getattr(tn, att)
-        user1= tn.query.filter((x == val)).all()
-        d = {}
-        for i in user1:
-            cnt = 0
-            for j in cn:
-                if j not in d:
-                    d[j] =[]
-                    cnt =cnt+1
-                a = getattr(i, j)
-                d[j].append(a)
-        return jsonify(d)
-        return {}
-
-    else:
-        q1 = data[:result-1]
-        q2 = data[result+4:]
-        i1 = q1.find('=')
-        a1 = q1[:i1-1]
-        v1 = q1[i1+2:]
-        x1 = getattr(tn, a1)
-        i2 = q2.find('=')
-        a2 = q2[:i2-1]
-        v2 = q2[i2+2:]
-        x2 = getattr(tn, a2)
-        #user1= tn.query.filter((x1 == v1)&(x2 == v2)).all()
-        user1= tn.query.filter(x1 == v1).filter(x2 == v2).all()
-        # print user1
-        d = {}
-        for i in user1:
-            cnt = 0
-            for j in cn:
-                if j not in d:
-                    d[j] =[]
-                    cnt =cnt+1
-                a = getattr(i, j)
-                d[j].append(a)
-        return jsonify(d)
-        return {}
 
 ########################### CLEAR DB ############################
 @app.route("/api/v1/db/clear",methods=meth)
@@ -241,13 +158,14 @@ def delete():
     global count
     if(request.method=="POST"):
         count=count+1
+        print("IN CLEAR DB USER")
         srn = randint(0,9999)
         signal = {
         "table" : "signal_table",
         "column" : ["srn","cleardb_flag"],
-        "insert" : [srn,"1"]
+        "insert" : [str(srn),"1"]
         }
-        url = 'http://52.203.199.62:5000/api/v1/db/read'
+        url = 'http://52.203.199.62:5000/api/v1/db/write'
         res = requests.post(url, json = signal)
         return {},200
     else:
