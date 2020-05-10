@@ -119,8 +119,9 @@ def add_ride():
         #resp0 = requests.get('http://171.19.0.2:80/api/v1/users')
         headers = {'Origin': '54.173.81.6'}
         resp0 = requests.get('http://hopelb-1353512799.us-east-1.elb.amazonaws.com/api/v1/users', headers = headers)
-        resp0 = resp0.json()
-        print("resp0------------------", un in resp0)
+        resp0 = resp0.text
+      #  print("reeesssspppp 0 $$$$$$$$$$",resp0,len(resp0))
+#        print("resp0------------------", un in resp0)
         if(resp0 and un in resp0):
             rid = randint(0,9999)
             if((src>0)and(src<199)):
@@ -129,12 +130,12 @@ def add_ride():
                     para2 = {
                             "table"  : "ride_details",
                             "column" : ["rideid","username","timestamp","source","destination"],
-                            "insert" : [rid,un,ts,src,dest]
+                            "insert" : [str(rid),un,ts,str(src),str(dest)]
                     }
                     #resp2 = c.post('/api/v1/db/write',json=para2,follow_redirects=True)
                     url = 'http://52.203.199.62:5000/api/v1/db/write'
                     resp2 = requests.post(url, json = para2)
-                    print("WRITE DONEEEEE", resp2)
+ #                   print("WRITE DONEEEEE", resp2)
                     para3 = { "table": "ride_details",
                         "column":["rideid"],
                         "where":"username = "+un
@@ -143,12 +144,17 @@ def add_ride():
                     #resp3 = c.post('/api/v1/db/read',json=para3,follow_redirects=True)
                     url = 'http://52.203.199.62:5000/api/v1/db/read'
                     resp3 = requests.post(url,json = para3)
+ #                  print("HIIIIIIIIIIIIII")
                     resp3 = resp3.text
+                   # print("RESP3",resp3)
                     resp3= resp3.encode("ascii", "ignore")
-                    obj = json.dumps(resp3)
-                    #print("OBJJJJJJJJ------", obj, type(obj))
+                   # print("RESP 3",resp3)
+                    obj = eval(resp3)
+                    
+                   # print("OBJJJJJJJJ------", obj, type(obj))
                     #global rid
                     # print "-----------", obj
+                   
                     for elem in obj["rideid"]:
                         #global rid
                         rid=rid+1
@@ -156,11 +162,12 @@ def add_ride():
                         para4 = {
                             "table" :"join_user",
                             "column" : ["srn","rideid","username"],
-                            "insert"  : [rid,elem, un]
+                            "insert"  : [str(rid),str(elem), un]
                         }
                        # resp2 = c.post('/api/v1/db/write',json=para4,follow_redirects=True)
                         url = 'http://52.203.199.62:5000/api/v1/db/write'
                         resp2 = requests.post(url, json = para4)
+                        print("AFTER JOIN USER RESP",resp2)
                 else:
                     return make_response("Destination does not exist", 400)
             else:
