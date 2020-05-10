@@ -273,7 +273,7 @@ if((master == -1)and(new_master==0)):
         data = x["where"]
         cn = x["column"]
         tn = x["table"]
-        print(data,cn,tn)
+        print("-----------data, cn, tn-----------",data,cn,tn)
         if(data == "fetchall"):
             
             with app.app_context():
@@ -295,8 +295,9 @@ if((master == -1)and(new_master==0)):
                 flatlist = [ item for elem in all for item in elem]
                 print ("---flatlist---", flatlist)
                 return json.dumps(flatlist)
-        elif(cn == "COUNT"):
+        elif(data == "count_ride"):
             ride= ride_details.query.filter(ride_details.rideid).count()
+            print("rideeeee----------", ride)
             return json.dumps(ride)
         else:
             print("NOT FETCH----------")
