@@ -295,6 +295,9 @@ if((master == -1)and(new_master==0)):
                 flatlist = [ item for elem in all for item in elem]
                 print ("---flatlist---", flatlist)
                 return json.dumps(flatlist)
+        elif(cn == "COUNT"):
+            ride= ride_details.query.filter(ride_details.rideid).count()
+            return json.dumps(ride)
         else:
             print("NOT FETCH----------")
             tn=eval(tn) 
