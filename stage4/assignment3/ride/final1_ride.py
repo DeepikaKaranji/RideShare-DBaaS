@@ -292,8 +292,11 @@ def get_task(task_id):
         }
         #resp2= c.post('/api/v1/db/read',json=para2,follow_redirects=True)
         url = 'http://52.203.199.62:5000/api/v1/db/read'
-        resp2 = requests.post(url, data = para2)
-        rideid1_obj = resp2.get_json()
+        resp2 = requests.post(url, json = para2)
+        rideid1_obj = resp2.text
+        rideid1_obj = rideid1_obj.encode("ascii","ignore")
+        rideid1_obj = eval(rideid1_obj)
+        print("*************",rideid1_obj)
         if(user1_obj and un in user1_obj): 
             if(rideid1_obj):
                 global rid
@@ -301,11 +304,11 @@ def get_task(task_id):
                 para3 = {
                     "table"  : "join_user",
                     "column" : ["srn","rideid","username"],
-                    "insert" : [rid,task_id,un]
+                    "insert" : [str(rid),str(task_id),un]
                 }
                 #resp2= c.post('/api/v1/db/write',json=para3,follow_redirects=True)
                 url = 'http://52.203.199.62:5000/api/v1/db/write'
-                resp2 = requests.post(url, data = para3)
+                resp2 = requests.post(url, json = para3)
                 return make_response("OK",200)
 
                 # ride1=join_user(srn =rid,rideid = task_id, username = un)
