@@ -173,13 +173,13 @@ def delete():
         print("IN CLEAR DB USER")
         srn = randint(0,9999)
         signal = {
-        "table" : "signal_table",
-        "column" : ["srn","cleardb_flag"],
+        "table" : "user_details",
+        "column" :"CLEARDB",
         "insert" : [str(srn),"1"]
         }
         url = 'http://52.203.199.62:5000/api/v1/db/write'
         res = requests.post(url, json = signal)
-        return {},200
+        return make_response("{}",200)
     else:
         count=count+1
         return make_response("405,Method Not Allowed",405)

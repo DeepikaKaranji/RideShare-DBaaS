@@ -60,7 +60,7 @@ def master_function(event):
         data1 = "I am master CID : "+min_cid+" PID : "+str(min_pid)
         data1 = data1.encode()
         zk.create("/worker/master", data1,ephemeral=True)
-        time.sleep(2)
+        time.sleep(4)
         zk.delete("/worker/slave/slave"+str(min_pid), version=-1, recursive=False)
 
         # time.sleep(10)
@@ -89,7 +89,7 @@ def master_function(event):
             pid_master = data[ind+5:len(data)+1]
             pid_master = int(pid_master)
 
-        time.sleep(20)
+        time.sleep(5)
         data,stat = zk.get("/worker/master")
         print("BEFORE RESTART MASTER DATA = ",data)
         container.restart()
@@ -302,7 +302,7 @@ def check():
                 command = "python /code/worker.py",
                 volumes = {
                     '/var/run/docker.sock': {'bind':'/var/run/docker.sock', 'mode':'rw'},
-                    '/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
+                    '/one/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
                 },
                 network = "zook_default",
                 detach = True
@@ -375,4 +375,4 @@ def read_db():
 
 if __name__ == "__main__":
     app.debug=True
-    app.run(host="0.0.0.0",debug=True, use_reloader=False)
+    app.run(host="0.0.0.0",port = "80",debug=True, use_reloader=False)
