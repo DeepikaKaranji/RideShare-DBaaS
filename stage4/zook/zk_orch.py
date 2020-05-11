@@ -89,7 +89,7 @@ def master_function(event):
             pid_master = data[ind+5:len(data)+1]
             pid_master = int(pid_master)
 
-        time.sleep(20)
+        time.sleep(5)
         data,stat = zk.get("/worker/master")
         print("BEFORE RESTART MASTER DATA = ",data)
         container.restart()
@@ -375,4 +375,4 @@ def read_db():
 
 if __name__ == "__main__":
     app.debug=True
-    app.run(host="0.0.0.0",debug=True, use_reloader=False)
+    app.run(host="0.0.0.0",port = "80",debug=True, use_reloader=False)

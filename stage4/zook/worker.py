@@ -136,9 +136,6 @@ class join_user(db.Model):
     srn= db.Column(db.Integer,primary_key=True)
     rideid = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80),primary_key=True)
-class signal_table(db.Model):
-    srn= db.Column(db.Integer,primary_key=True)
-    cleardb_flag = db.Column(db.Integer)
 
 db.create_all()
 
@@ -218,18 +215,23 @@ if((master == -1)and(new_master==0)):
         data = x["insert"]
         cn = x["column"]
         tn = x["table"]
-        if(tn == "signal_table"):
-            ride_details.query.delete()
-            db.session.commit()
-            print("ride cleared")
+        actcn = ""
+        for i in cn:
+            actcn = actcn+i
+        if(actcn == "CLEARDB"):
+            if(tn == "user_details"):
+                user_details.query.delete()
+                db.session.commit()
+                print("userdb cleared")
+            else:
 
-            user_details.query.delete()
-            db.session.commit()
-            print("ride cleared")
+                ride_details.query.delete()
+                db.session.commit()
+                print("ride cleared")
 
-            join_user.query.delete()
-            db.session.commit()
-            print("join users cleared")
+                join_user.query.delete()
+                db.session.commit()
+                print("join users cleared")
 
         else:
             tn=eval(tn) 
@@ -387,18 +389,23 @@ else:
         data = x["insert"]
         cn = x["column"]
         tn = x["table"]
-        if(tn == "signal_table"):
-            ride_details.query.delete()
-            db.session.commit()
-            print("ride cleared")
+        actcn = ""
+        for i in cn:
+            actcn = actcn+i
+        if(actcn == "CLEARDB"):
+            if(tn == "user_details"):
+                user_details.query.delete()
+                db.session.commit()
+                print("userdb cleared")
+            else:
 
-            user_details.query.delete()
-            db.session.commit()
-            print("ride cleared")
+                ride_details.query.delete()
+                db.session.commit()
+                print("ride cleared")
 
-            join_user.query.delete()
-            db.session.commit()
-            print("join users cleared")
+                join_user.query.delete()
+                db.session.commit()
+                print("join users cleared")
 
         else:
             tn=eval(tn) 
