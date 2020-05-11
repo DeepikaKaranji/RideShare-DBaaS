@@ -302,7 +302,7 @@ def check():
                 command = "python /code/worker.py",
                 volumes = {
                     '/var/run/docker.sock': {'bind':'/var/run/docker.sock', 'mode':'rw'},
-                    '/one/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
+                    '/home/ubuntu/one/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
                 },
                 network = "zook_default",
                 detach = True

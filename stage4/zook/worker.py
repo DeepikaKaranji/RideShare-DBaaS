@@ -178,14 +178,14 @@ if((master == -1)and(new_master==0)):
                 command = "python /code/worker.py",
                 volumes = {
                     '/var/run/docker.sock': {'bind':'/var/run/docker.sock', 'mode':'rw'},
-                    '/one/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
+                    '/home/ubuntu/one/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
                 },
                 network = "zook_default",
                 detach = True
             )
             print("Trying to start a new container")
             new_container.start()
-            print("NEW CONTAINER--", new_container)
+            print("NEW CONTAINER----", new_container, new_container.logs())
     
             # copy to new container db from master db
             new_cid = new_container.id
