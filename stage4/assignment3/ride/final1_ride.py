@@ -117,7 +117,7 @@ def add_ride():
         # resp0 = requests.get('http://127.0.0.1:5000/users/api/v1/users')
         
         #resp0 = requests.get('http://171.19.0.2:80/api/v1/users')
-        headers = {'Origin': '54.173.81.6'}
+        headers = {'Origin': '52.2.156.61'}
         resp0 = requests.get('http://hopelb-1353512799.us-east-1.elb.amazonaws.com/api/v1/users', headers = headers)
         resp0 = resp0.text
       #  print("reeesssspppp 0 $$$$$$$$$$",resp0,len(resp0))
@@ -280,7 +280,7 @@ def get_task(task_id):
 
         c = app.test_client()
         # user1= user_details.query.filter_by(username = un).first()
-        headers = {'Origin': '54.173.81.6'}
+        headers = {'Origin': '52.2.156.61'}
         resp1 = requests.get('http://hopelb-1353512799.us-east-1.elb.amazonaws.com/api/v1/users', headers = headers)
         user1_obj = resp1.json()
 
@@ -328,7 +328,7 @@ def get_task(task_id):
         }
 #        response = c.post('/api/v1/db/read',json=para1,follow_redirects=True
         url = 'http://52.203.199.62:5000/api/v1/db/read'
-        response = requests.post(url, data = para1)
+        response = requests.post(url, json = para1)
 
         if(response.get_json()): 
             ride_details.query.filter(ride_details.rideid == str(task_id)).delete() 
@@ -353,8 +353,8 @@ def delete():
         "column" : ["srn","cleardb_flag"],
         "insert" : [str(srn),"1"]
         }
-        url = 'http://52.203.199.62/api/v1/db/read'
-        res = requests.post(url, data = signal)
+        url = 'http://52.203.199.62:5000/api/v1/db/write'
+        res = requests.post(url, json = signal)
         return {},200
     else:
         count=count+1
