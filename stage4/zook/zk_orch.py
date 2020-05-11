@@ -60,7 +60,7 @@ def master_function(event):
         data1 = "I am master CID : "+min_cid+" PID : "+str(min_pid)
         data1 = data1.encode()
         zk.create("/worker/master", data1,ephemeral=True)
-        time.sleep(2)
+        time.sleep(4)
         zk.delete("/worker/slave/slave"+str(min_pid), version=-1, recursive=False)
 
         # time.sleep(10)
@@ -302,7 +302,7 @@ def check():
                 command = "python /code/worker.py",
                 volumes = {
                     '/var/run/docker.sock': {'bind':'/var/run/docker.sock', 'mode':'rw'},
-                    '/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
+                    '/one/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
                 },
                 network = "zook_default",
                 detach = True

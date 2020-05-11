@@ -181,7 +181,7 @@ if((master == -1)and(new_master==0)):
                 command = "python /code/worker.py",
                 volumes = {
                     '/var/run/docker.sock': {'bind':'/var/run/docker.sock', 'mode':'rw'},
-                    '/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
+                    '/one/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
                 },
                 network = "zook_default",
                 detach = True
@@ -249,6 +249,11 @@ if((master == -1)and(new_master==0)):
                     ind = actdata.find("=")
                     user = actdata[ind+2:]
                     res1 = tn.query.filter(tn.username == user).delete()
+                    db.session.commit()
+                elif('rideid' in actdata):
+                    ind = actdata.find("=")
+                    user = actdata[ind+2:]
+                    res1 = tn.query.filter(tn.rideid == user).delete()
                     db.session.commit()
 
             else:
@@ -319,6 +324,7 @@ if((master == -1)and(new_master==0)):
                             cnt =cnt+1
                         a = getattr(i, j)
                         d[j].append(a)
+     
             
             else:
                 q1 = data[:result-1]
@@ -412,6 +418,11 @@ else:
                     ind = actdata.find("=")
                     user = actdata[ind+2:]
                     res1 = tn.query.filter(tn.username == user).delete()
+                    db.session.commit()
+                elif('rideid' in actdata):
+                    ind = actdata.find("=")
+                    user = actdata[ind+2:]
+                    res1 = tn.query.filter(tn.rideid == user).delete()
                     db.session.commit()
             else:
                 new_user=tn()
