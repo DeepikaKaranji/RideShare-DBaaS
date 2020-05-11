@@ -136,9 +136,6 @@ class join_user(db.Model):
     srn= db.Column(db.Integer,primary_key=True)
     rideid = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80),primary_key=True)
-class signal_table(db.Model):
-    srn= db.Column(db.Integer,primary_key=True)
-    cleardb_flag = db.Column(db.Integer)
 
 db.create_all()
 
@@ -181,7 +178,7 @@ if((master == -1)and(new_master==0)):
                 command = "python /code/worker.py",
                 volumes = {
                     '/var/run/docker.sock': {'bind':'/var/run/docker.sock', 'mode':'rw'},
-                    '/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
+                    '/one/cloud/stage4/zook':{'bind':'/code', 'mode':'rw'}    
                 },
                 network = "zook_default",
                 detach = True
@@ -218,18 +215,23 @@ if((master == -1)and(new_master==0)):
         data = x["insert"]
         cn = x["column"]
         tn = x["table"]
-        if(tn == "signal_table"):
-            ride_details.query.delete()
-            db.session.commit()
-            print("ride cleared")
+        actcn = ""
+        for i in cn:
+            actcn = actcn+i
+        if(actcn == "CLEARDB"):
+            if(tn == "user_details"):
+                user_details.query.delete()
+                db.session.commit()
+                print("userdb cleared")
+            else:
 
-            user_details.query.delete()
-            db.session.commit()
-            print("ride cleared")
+                ride_details.query.delete()
+                db.session.commit()
+                print("ride cleared")
 
-            join_user.query.delete()
-            db.session.commit()
-            print("join users cleared")
+                join_user.query.delete()
+                db.session.commit()
+                print("join users cleared")
 
         else:
             tn=eval(tn) 
@@ -249,6 +251,11 @@ if((master == -1)and(new_master==0)):
                     ind = actdata.find("=")
                     user = actdata[ind+2:]
                     res1 = tn.query.filter(tn.username == user).delete()
+                    db.session.commit()
+                elif('rideid' in actdata):
+                    ind = actdata.find("=")
+                    user = actdata[ind+2:]
+                    res1 = tn.query.filter(tn.rideid == user).delete()
                     db.session.commit()
 
             else:
@@ -273,7 +280,7 @@ if((master == -1)and(new_master==0)):
         data = x["where"]
         cn = x["column"]
         tn = x["table"]
-        print(data,cn,tn)
+        print("-----------data, cn, tn-----------",data,cn,tn)
         if(data == "fetchall"):
             
             with app.app_context():
@@ -295,6 +302,10 @@ if((master == -1)and(new_master==0)):
                 flatlist = [ item for elem in all for item in elem]
                 print ("---flatlist---", flatlist)
                 return json.dumps(flatlist)
+        elif(data == "count_ride"):
+            ride= ride_details.query.filter(ride_details.rideid).count()
+            print("rideeeee----------", ride)
+            return json.dumps(ride)
         else:
             print("NOT FETCH----------")
             tn=eval(tn) 
@@ -315,6 +326,7 @@ if((master == -1)and(new_master==0)):
                             cnt =cnt+1
                         a = getattr(i, j)
                         d[j].append(a)
+     
             
             else:
                 q1 = data[:result-1]
@@ -377,18 +389,23 @@ else:
         data = x["insert"]
         cn = x["column"]
         tn = x["table"]
-        if(tn == "signal_table"):
-            ride_details.query.delete()
-            db.session.commit()
-            print("ride cleared")
+        actcn = ""
+        for i in cn:
+            actcn = actcn+i
+        if(actcn == "CLEARDB"):
+            if(tn == "user_details"):
+                user_details.query.delete()
+                db.session.commit()
+                print("userdb cleared")
+            else:
 
-            user_details.query.delete()
-            db.session.commit()
-            print("ride cleared")
+                ride_details.query.delete()
+                db.session.commit()
+                print("ride cleared")
 
-            join_user.query.delete()
-            db.session.commit()
-            print("join users cleared")
+                join_user.query.delete()
+                db.session.commit()
+                print("join users cleared")
 
         else:
             tn=eval(tn) 
@@ -408,6 +425,11 @@ else:
                     ind = actdata.find("=")
                     user = actdata[ind+2:]
                     res1 = tn.query.filter(tn.username == user).delete()
+                    db.session.commit()
+                elif('rideid' in actdata):
+                    ind = actdata.find("=")
+                    user = actdata[ind+2:]
+                    res1 = tn.query.filter(tn.rideid == user).delete()
                     db.session.commit()
             else:
                 new_user=tn()
