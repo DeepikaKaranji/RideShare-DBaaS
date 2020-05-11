@@ -218,7 +218,7 @@ def add_ride():
             print("&&&&&&&&&&&&&",final)
             return json.dumps(final)
         else:
-            return make_response("Ride Id does not exist", 400)    
+            return make_response("Ride Id does not exist", 204)    
     
     else:
         count=count+1
@@ -267,7 +267,7 @@ def get_task(task_id):
     
       #  res= ride1_obj["username"]
         if(not ride_obj):
-            return make_response("Ride id does not exist",400)
+            return make_response("Ride id does not exist",204)
         else:
             res= ride1_obj["username"]
             return make_response(jsonify({"rideid":ride_dict["rideid"],"created By":ride_dict["username"],\
@@ -315,7 +315,7 @@ def get_task(task_id):
                 # db.session.add(ride1)
                 # db.session.commit()
             else:
-                return make_response("rideid does not exist",400)
+                return make_response("rideid does not exist",204)
         else:
             return make_response("Username does not exist", 400) 
     if(request.method=="DELETE"):
@@ -344,7 +344,7 @@ def get_task(task_id):
 #            ride_details.query.filter(ride_details.rideid == str(task_id)).delete() 
             db.session.commit()
         else:
-            return make_response("Ride ID does not exist",400)
+            return make_response("Ride ID does not exist",204)
         return make_response("{}",200)
     else:
         count=count+1
