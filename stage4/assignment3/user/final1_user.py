@@ -55,7 +55,7 @@ def list_users():
 	    "column" : ["password","username"],
         "where"  : "fetchall"
         }
-        url = 'http://52.203.199.62:5000/api/v1/db/read'
+        url = 'http://52.203.199.62:80/api/v1/db/read'
         response = requests.post(url, json = para0)
         print("*******RESPONSE",response)
         print("**********, TYPE OF RESPONSE", type(response))
@@ -81,7 +81,7 @@ def list_users():
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True,\
         #      environ_base={'REMOTE_ADDR': '127.0.0.1'})
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
-        url = 'http://52.203.199.62:5000/api/v1/db/read'
+        url = 'http://52.203.199.62:80/api/v1/db/read'
         response = requests.post(url, json = para1)
         print("......response.........",json.dumps(response.json()))
         print("......response testing.........",response.json())
@@ -105,7 +105,7 @@ def list_users():
         "insert" : [un,ps]
         }
         # response = c.post('/api/v1/db/write',json=para,follow_redirects=True)
-        url = 'http://52.203.199.62:5000/api/v1/db/write'
+        url = 'http://52.203.199.62:80/api/v1/db/write'
         response = requests.post(url, json = para)
 
         return make_response("{}", 201)
@@ -128,7 +128,7 @@ def delete_user(user):
         "where" :  "username = "+ user
         }
         # response = c.post('/api/v1/db/read',json=para1,follow_redirects=True)
-        url = 'http://52.203.199.62:5000/api/v1/db/read'
+        url = 'http://52.203.199.62:80/api/v1/db/read'
         response = requests.post(url, json = para1)
         res = response.text
         res = res.encode("ascii","ignore")
@@ -147,7 +147,7 @@ def delete_user(user):
             "insert" : "username = " + user
 
             }
-            url = 'http://52.203.199.62:5000/api/v1/db/write'
+            url = 'http://52.203.199.62:80/api/v1/db/write'
             response = requests.post(url, json = para6)
             print("THIS SHOULDNT BE COMMENTED!!!")
             #url = 'http://hopeLB-598791841.us-east-1.elb.amazonaws.com/api/v1/rides/custom?username='+user
@@ -177,7 +177,7 @@ def delete():
         "column" :"CLEARDB",
         "insert" : [str(srn),"1"]
         }
-        url = 'http://52.203.199.62:5000/api/v1/db/write'
+        url = 'http://52.203.199.62:80/api/v1/db/write'
         res = requests.post(url, json = signal)
         return make_response("{}",200)
     else:
