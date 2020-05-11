@@ -151,7 +151,7 @@ def add_ride():
                    # print("RESP 3",resp3)
                     obj = eval(resp3)
                     
-                   # print("OBJJJJJJJJ------", obj, type(obj))
+                    print("OBJJJJJJJJ------", obj, type(obj))
                     #global rid
                     # print "-----------", obj
                    
@@ -329,9 +329,19 @@ def get_task(task_id):
 #        response = c.post('/api/v1/db/read',json=para1,follow_redirects=True
         url = 'http://52.203.199.62:5000/api/v1/db/read'
         response = requests.post(url, json = para1)
+        res = response.text
+        res = res.encode("ascii","ignore")
+        
+        if(res!='{}'):
+            para6 = {
+            "table" : "ride_details",
+            "column" : "DELETE",
+            "insert" : "rideid = " + str(task_id)
 
-        if(response.get_json()): 
-            ride_details.query.filter(ride_details.rideid == str(task_id)).delete() 
+            }
+            url = 'http://52.203.199.62:5000/api/v1/db/write'
+            response = requests.post(url, json = para6)
+#            ride_details.query.filter(ride_details.rideid == str(task_id)).delete() 
             db.session.commit()
         else:
             return make_response("Ride ID does not exist",400)
@@ -349,13 +359,13 @@ def delete():
         count=count+1
         srn = randint(0,9999)
         signal = {
-        "table" : "signal_table",
-        "column" : ["srn","cleardb_flag"],
+        "table" : "ride_details",
+        "column" : "CLEARDB",
         "insert" : [str(srn),"1"]
         }
         url = 'http://52.203.199.62:5000/api/v1/db/write'
         res = requests.post(url, json = signal)
-        return {},200
+        return make_response("{}",200)
     else:
         count=count+1
         return make_response("405,Method Not Allowed",405)
