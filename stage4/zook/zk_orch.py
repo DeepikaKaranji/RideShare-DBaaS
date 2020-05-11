@@ -251,8 +251,8 @@ class TestRpcClient(object):
         return self.response
 
 def check():
-    global flag
-    flag = 0
+    #global flag
+    #flag = 0
     d={}
     sl = zk.get_children("/worker/slave")
     for i in sl:
@@ -333,7 +333,10 @@ def check():
             client = docker.from_env()
             container = client.containers.get(cid)
             container.kill()
-            i = i + 1   
+            i = i + 1 
+    count=0
+    timer = threading.Timer(120.0,check)
+    timer.start()
   
 
 

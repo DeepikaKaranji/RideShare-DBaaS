@@ -159,7 +159,7 @@ if((master == -1)and(new_master==0)):
         elif(event.type == 'DELETED'):
             global pid
             print("----Deleting DB of Worker with PID "+str(pid)+"----")
-            time.sleep(10)
+            time.sleep(20)
             while(not zk.exists("/worker/master")):
                 print("WAITING FOR MASTER")
             ms = "/worker/master"
