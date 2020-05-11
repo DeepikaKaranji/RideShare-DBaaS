@@ -60,7 +60,7 @@ def master_function(event):
         data1 = "I am master CID : "+min_cid+" PID : "+str(min_pid)
         data1 = data1.encode()
         zk.create("/worker/master", data1,ephemeral=True)
-        time.sleep(4)
+        time.sleep(10)
         zk.delete("/worker/slave/slave"+str(min_pid), version=-1, recursive=False)
 
         # time.sleep(10)
@@ -89,7 +89,7 @@ def master_function(event):
             pid_master = data[ind+5:len(data)+1]
             pid_master = int(pid_master)
 
-        time.sleep(5)
+        time.sleep(10)
         data,stat = zk.get("/worker/master")
         print("BEFORE RESTART MASTER DATA = ",data)
         container.restart()
