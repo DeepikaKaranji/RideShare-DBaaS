@@ -24,15 +24,47 @@ count = 0
 zk = KazooClient(hosts='zoo:2181',timeout=1.0)
 zk.start(timeout=1)
 
+class TestRpcClient(object):
 
+    def __init__(self):
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host='rmq'))
 
+        self.channel = self.connection.channel()
+
+        result = self.channel.queue_declare(queue='', exclusive=True)
+        self.callback_queue = result.method.queue
+
+        self.channel.basic_consume(
+            queue=self.callback_queue,
+            on_message_callback=self.on_response,
+            auto_ack=True)
+
+    def on_response(self, ch, method, props, body):
+        if self.corr_id == props.correlation_id:
+            self.response = body
+
+    def call(self, n):
+        # routes to the rpc queue
+        self.response = None
+        self.corr_id = str(uuid.uuid4())
+        self.channel.basic_publish(
+            exchange='',
+            routing_key='rpcq',
+            properties=pika.BasicProperties(
+                reply_to=self.callback_queue,
+                correlation_id=self.corr_id,
+            ),
+            body=n)
+        while self.response is None:
+            self.connection.process_data_events()
+        return self.response
 
 def master_function(event):
-    print("IN MASTER")
-    print(event)
     children = zk.get_children("/worker")
     sl = zk.get_children("/worker/slave")    
     if(event.type == 'DELETED'):
+        # if master znode is deleted
         nm ="/worker/slave/"+sl[0]
         data, stat = zk.get(nm)
         data = data.decode("utf-8")
@@ -41,7 +73,8 @@ def master_function(event):
         min_pid=int(pid)
         ind = data.find('CID')
         min_cid = data[ind+6:ind+18]
-      
+
+        # get pid of slave with least pid to elect that as master
         for i in range(1,len(sl)):
             nm ="/worker/slave/"+sl[i]
             data, stat = zk.get(nm)
@@ -57,17 +90,14 @@ def master_function(event):
         client = docker.from_env()
         container = client.containers.get(min_cid)
         children = zk.get_children("/worker")
+        # new data to be inserted into the znode of the slave with min_pid that became master
         data1 = "I am master CID : "+min_cid+" PID : "+str(min_pid)
         data1 = data1.encode()
+        # create znode for new master
         zk.create("/worker/master", data1,ephemeral=True)
         time.sleep(10)
+        # delete znode of ex-slave, now master
         zk.delete("/worker/slave/slave"+str(min_pid), version=-1, recursive=False)
-
-        # time.sleep(10)
-        ms = "/worker/master"
-        data, stat = zk.get(ms)
-        data = data.decode("utf-8")
-        ind = data.find('PID')
 
         ms = "/worker/master"
         data, stat = zk.get(ms)
@@ -75,12 +105,12 @@ def master_function(event):
         ind = data.find('PID')
         pid_master = data[ind+5:len(data)+1]
         pid_master = int(pid_master)
-
-
         # ind<0: if path/w/m isnt created not zk.exists("/worker/master") and 
         # min_pid!=pid_master: new master has not yet been elected
+
         while(min_pid!=pid_master):
-            print("---------------------WHILE BEFORE RESTART-------------------")
+            # delay loop
+            print("dELAY LOOP")
             # update master_pid to break loop
             ms = "/worker/master"
             data, stat = zk.get(ms)
@@ -91,41 +121,31 @@ def master_function(event):
 
         time.sleep(10)
         data,stat = zk.get("/worker/master")
-        print("BEFORE RESTART MASTER DATA = ",data)
+        # container restart creates new pid for same container
         container.restart()
-        # 
-        print("--------------AFTER RESTART MPID", pid_master)
+        # create watch on master 
         m = zk.get("/worker/master", watch=master_function)
-        print(" MASTER after creating watch after restart-----------",m)#slave1
-
-
-        # children = zk.get_children("/worker/slave")
-        # print(" ALL SLAVES %s children with names %s" % (len(children), children))#slave1
-        # children = zk.get_children("/worker")
-        # print(" AFTER CHANGING %s children with names %s" % (len(children), children))#master,slave
-        # print("SLAVE PID",min_pid)
-        # print("SLAVE CID",min_cid)
 
 begin = 0
 if(begin == 0):
     children = zk.get("/worker/master", watch=master_function) 
-    #global begin#
-    print("IN BEGIN")
     print("BEGIN :", begin)
-
     begin = 1
 
+# list worker pids
 @app.route("/api/v1/worker/list",methods=["GET"])
 def list():
     l=[]
+    # append master pid
     ms = "/worker/master"
     data, stat = zk.get(ms)
     data = data.decode("utf-8")
     ind = data.find('PID')
     pid = data[ind+5:len(data)+1]
-    print("--------------------MASTER-----------------------",pid)
     pid=int(pid)
     l.append(pid)
+
+    # append slave pids
     sl = zk.get_children("/worker/slave")
     for i in sl:
         nm ="/worker/slave/"+i
@@ -138,6 +158,7 @@ def list():
     l.sort()
     return make_response(json.dumps(l),200)
 
+# crash master api
 @app.route("/api/v1/crash/master",methods=["POST"])
 def crash_master():
     m = "/worker/master"
@@ -150,33 +171,29 @@ def crash_master():
     l.append(pid)
     ind = data.find('CID')
     cid = data[ind+6:ind+18]
+    # znode delete and container kill are asynch calls
+    # Since the old slave may be killed before it births a new container, sleep is needed
     zk.delete("/worker/master", version=-1, recursive=False)
     client = docker.from_env()
     container = client.containers.get(cid)
-   # print(cid)
-   # print(container)
     time.sleep(20)
     container.kill()
-    children = zk.get_children("/worker")
-    print(" IN ORCH AFTER CONTAINER KILL%s children with names %s" % (len(children), children))#master,slave
-    children = zk.get_children("/worker/slave")
-    print(" IN ORCH AFTER CONTAINER KILL%s children with names %s" % (len(children), children))#master,slave
     return make_response(json.dumps(l),200)
 
+# crash slave api
 @app.route("/api/v1/crash/slave",methods=["POST"])
 def crash_slave():
+    # slave with highest pid is crashed
     maxi=0
     l=[]
     sl = zk.get_children("/worker/slave")
     for i in sl:
-#        print("I" ,i)
         nm ="/worker/slave/"+i
         data, stat = zk.get(nm)
         data = data.decode("utf-8")
         ind = data.find('PID')
         pid = data[ind+6:len(data)+1]
         pid=int(pid)
-        #print("PIDDDDD:   ", pid)
         if(pid>maxi):
             maxi=pid
             ind = data.find('CID')
@@ -185,13 +202,11 @@ def crash_slave():
     zk.delete("/worker/slave/slave"+str(maxi), version=-1, recursive=False)
     client = docker.from_env()
     container = client.containers.get(cid)
-#    print(cid)
-#    print(container)
     time.sleep(20)
     container.kill()
     return make_response(json.dumps(l),200)
 
-
+# write db api
 @app.route("/api/v1/db/write",methods=["POST"])
 def write_db():
     content = request.json
@@ -215,44 +230,9 @@ def write_db():
     connection.close()
     return {},200
 
-class TestRpcClient(object):
-
-    def __init__(self):
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='rmq'))
-
-        self.channel = self.connection.channel()
-
-        result = self.channel.queue_declare(queue='', exclusive=True)
-        self.callback_queue = result.method.queue
-
-        self.channel.basic_consume(
-            queue=self.callback_queue,
-            on_message_callback=self.on_response,
-            auto_ack=True)
-
-    def on_response(self, ch, method, props, body):
-        if self.corr_id == props.correlation_id:
-            self.response = body
-
-    def call(self, n):
-        self.response = None
-        self.corr_id = str(uuid.uuid4())
-        self.channel.basic_publish(
-            exchange='',
-            routing_key='rpcq',
-            properties=pika.BasicProperties(
-                reply_to=self.callback_queue,
-                correlation_id=self.corr_id,
-            ),
-            body=n)
-        while self.response is None:
-            self.connection.process_data_events()
-        return self.response
 
 def check():
-    #global flag
-    #flag = 0
+    # autoscale function
     d={}
     sl = zk.get_children("/worker/slave")
     for i in sl:
@@ -273,19 +253,20 @@ def check():
     print("LIST: ",l)
     l.sort()
     l.reverse()
-    n = len(l)  #no.of slaves
+    current_slaves = len(l) 
     global count
     if(count==0):
-        no = 1 #total no.of slaves we want
+        needed_slaves = 1 
     elif(count%20 == 0):
-        no = count//20
+        needed_slaves = count//20
     else:
-        no = count//20 +1
-    todo = no - n
-    print("-----------SLAVES WE HAVE-----------",n)
-    print("----------TOTAL SLAVES WE NEED------------",no)
-    print("-----------TODO-----------",todo)
-    if( todo > 0):
+        needed_slaves = count//20 +1
+    todo = needed_slaves - current_slaves
+    print("-----------SLAVES WE HAVE------------------",current_slaves)
+    print("-----------TOTAL SLAVES WE NEED------------",needed_slaves)
+    print("-----------TODO----------------------------",todo)
+    if(todo > 0):
+        # spawn todo number of slaves
         i=0
         ms = "/worker/master"
         data, stat = zk.get(ms)
@@ -293,7 +274,6 @@ def check():
         ind = data.find('PID')
         pid = data[ind+5:len(data)+1]
         masterdb = str(pid)+".db"
-        print("MASTER DB---------------", masterdb)
         while(i<todo):
             client = docker.from_env()
             print("VALUE OF I",i)
@@ -318,10 +298,10 @@ def check():
             new_pid = client2.inspect_container(new_cid)['State']['Pid']
             print("-----new container pid-----", new_pid)
             cmd = "cp "+ masterdb +" "+ str(new_pid)+".db"
-            # print("*********** COMMAND: ", cmd)
             res = os.system(cmd)
             i=i+1
     elif(todo < 0):
+        # kill todo number of slaves
         todo = -todo     
         i=0
         while(i<todo):
@@ -335,11 +315,11 @@ def check():
             container.kill()
             i = i + 1 
     count=0
+    # check for scaling every 120 seconds
     timer = threading.Timer(120.0,check)
     timer.start()
-  
 
-
+# read db api
 @app.route("/api/v1/db/read",methods=["GET","POST"])
 def read_db():
     global flag
@@ -351,11 +331,9 @@ def read_db():
         timer.start() 
     else:
         count = count + 1
-    print("+++++++++++++++++")
-    print("COUNT",count)
-    print("+++++++++++++++++")
-    content = request.json
-    print("-----REQ GOT------------------", content['table'])
+    print("++++++++++++++++++")
+    print("READ REQUEST COUNT",count)
+    print("++++++++++++++++++")
     data = request.get_json()["where"]
     cn = request.get_json()["column"]
     tn = request.get_json()["table"]
@@ -366,13 +344,11 @@ def read_db():
     for i in range(0,len(cn)-1):
     	test= test+ "\"" +cn[i] + "\"" + ","
     test= test + "\"" + cn[len(cn)-1] + "\" ] }"
-  #  channel.basic_publish(exchange='', routing_key='rq', body=test, properties=pika.BasicProperties(delivery_mode=2,))
     print(" [x] Sent %r" % test)
     test_rpc = TestRpcClient()
     result = test_rpc.call(test)
     print("RPC is %r" %result)
     result = result.decode("utf8")
-    print("RESULT TYPE--------------", (json.dumps(result)))
     connection.close()
     return result
 

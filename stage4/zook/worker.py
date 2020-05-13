@@ -21,18 +21,17 @@ new_master = 0
 zk = KazooClient(hosts='zoo:2181',timeout=1.0)
 zk.start(timeout=1)
 
+# get cid, pid of container running this code
 cmd = "cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
 cid = subprocess.check_output(cmd,shell=True)
 cid = cid.decode("utf-8")
 cid=cid[0:12]
-
 client2 = docker.APIClient()
 pid = client2.inspect_container(cid)['State']['Pid']
-print("---PID", pid)
-print("---CID", cid)
+print("---PID---", pid)
+print("---CID---", cid)
 
 zk.ensure_path("/worker")
-
 if zk.exists("/worker/slave"):
     print("Slave exists")
 else:
@@ -47,11 +46,11 @@ if zk.exists("/worker/master"):
     ind = data.find('PID')
     pid_master = data[ind+5:len(data)+1]
     pid_master = int(pid_master)
-    print("HELLO FROM MASTERKK - ",pid_master)
     data,stat = zk.get("/worker/master")
     data = data.decode("utf-8")
     ind = data.find('CID')
     mcid = data[ind+6:ind+18]
+    # reassign old pid to master container on worker restart
     if(mcid == cid):
         present = 1
         pid = pid_master
@@ -68,25 +67,21 @@ if zk.exists("/worker/master"):
         if(ccid == cid):
             present = 1
             pid = cpid
-            
-
     if(present == 0):
+        # create slave znode
         data1 = "I am slaver CID : "+cid+" PID : "+str(pid)
         data2 = data1.encode()
         zk.create("/worker/slave/slave"+str(pid), data2, ephemeral = True)
-
     else:
-        new_master = 1
-        
+        new_master = 1      
 else:
+    # create master znode
     data1 = "I am master CID : "+cid+" PID : "+str(pid)
     data2 = data1.encode()
     zk.create("/worker/master", data2,ephemeral = True)
     
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
 channel = connection.channel()
-
-
 zk = KazooClient(hosts='zoo:2181',timeout=1.0)
 zk.start(timeout=1)
 
@@ -99,7 +94,6 @@ pid_master = int(pid_master)
 ind = data.find('CID')
 cid_master = data[ind+5:ind+18]
 
-
 if(new_master == 0):
 # current worker pid
     cmd = "cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
@@ -110,12 +104,7 @@ if(new_master == 0):
     pid = client2.inspect_container(cid)['State']['Pid']
     pid = int(pid)
 
-
-print("~~~~~~~~~~~~~~~~ZNODE MASTER PATH PID", pid_master)
-print("~~~~~~~~~~~~~~~~CURRENT WORKER PID", pid)
-print("~~~~~~~~~~~~~~~~ZNODE MASTER PATH CID", cid_master)
-print("~~~~~~~~~~~~~~~~CURRENT WORKER CID", cid)
-
+# create pid.db 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///'+str(pid)+'.db'
@@ -125,7 +114,6 @@ dbname = str(pid)+'.db'
 class user_details(db.Model):
     username = db.Column(db.String(80), primary_key=True)
     password = db.Column(db.String(80))
-
 class ride_details(db.Model):
     rideid = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80))
@@ -136,7 +124,6 @@ class join_user(db.Model):
     srn= db.Column(db.Integer,primary_key=True)
     rideid = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80),primary_key=True)
-
 db.create_all()
 
 
@@ -144,33 +131,27 @@ if(pid_master != pid):
     master = -1 #it is slave
 else:
     master = 0 #it is master
-# master = data1.find("master")
 print("************************NEW_MASTER",new_master)
 
 if((master == -1)and(new_master==0)):
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    print("IN SLAVE")
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+    # current worker is slave
+
     def slave_function(event):
-        print("IN SLAVE FUNCTION event",event)
-        print("SLAVE FUNCTION CALLED")
         if(event.type == 'CHANGED'):
-            print("you have succeeded, no new container was spawned")
+            # for scale in, kill slave without spawn
+            print("no new container was spawned")
         elif(event.type == 'DELETED'):
+            # if slave znode deleted during slave crash
             global pid
-            print("----Deleting DB of Worker with PID "+str(pid)+"----")
             time.sleep(20)
             while(not zk.exists("/worker/master")):
                 print("WAITING FOR MASTER")
             ms = "/worker/master"
             data, stat = zk.get(ms)
-            print("DATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", data)
             data = data.decode("utf-8")
             ind = data.find('PID')
             pid = data[ind+5:len(data)+1]
             masterdb = str(pid)+".db"
-            print("MASTER DB---------------", masterdb)
-    
             print("---------Spawning New Slave!!--------")
             client = docker.from_env()
             new_container = client.containers.create(
@@ -185,20 +166,17 @@ if((master == -1)and(new_master==0)):
             )
             print("Trying to start a new container")
             new_container.start()
-            print("NEW CONTAINER----", new_container, new_container.logs())
+            print("NEW CONTAINER: ", new_container)
     
-            # copy to new container db from master db
+            # copy to new slave db from master db
             new_cid = new_container.id
             client2 = docker.APIClient()
             new_pid = client2.inspect_container(new_cid)['State']['Pid']
-
-            print("############ PID NEW CONTAINER--", new_pid)
-            print("----------To copy: masterdb, newdb ", masterdb, str(new_pid))
             cmd = "cp "+ masterdb +" "+ str(new_pid)+".db"
             res = os.system(cmd)
     
         else:
-            print("Uh what event is this even??")
+            print("WARNING: unrecognised event")
        
     if zk.exists("/worker/slave/slave"+str(pid)):
         children = zk.get("/worker/slave/slave"+str(pid), watch=slave_function)
@@ -235,18 +213,14 @@ if((master == -1)and(new_master==0)):
 
         else:
             tn=eval(tn) 
-            #print("DATA",data)
             actdata = ""
             for i in data:
                 actdata = actdata+i
             actcn = ""
             for i in cn:
                 actcn = actcn+i
-            #print("CN",cn)
-            #print("DATA",actdata)
-            #print("cn",actcn)
+
             if(actcn == "DELETE"):
-                #print("INSSSIIIIIIIIDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEE")
                 if('username' in actdata):
                     ind = actdata.find("=")
                     user = actdata[ind+2:]
@@ -275,39 +249,24 @@ if((master == -1)and(new_master==0)):
     def callback_read(x): 
         print(" [x] Received IN READ%r" % x)
         print("======================")
-        print("PID: ", str(pid))
+        print("SLAVE SERVING READ: ", str(pid))
         print("======================")
         data = x["where"]
         cn = x["column"]
         tn = x["table"]
-        print("-----------data, cn, tn-----------",data,cn,tn)
         if(data == "fetchall"):
             
             with app.app_context():
-                print("FETCHING ALL USERS----------")
-                # flatlist = []
-                # tn = eval(tn)
-                # userlist = tn.query.all()
-                # print("---------usrlist--", \
-                #     userlist, "--type--", type(userlist[0]))
-
-                # for user in userlist:
-                #     print("--user--", user,"--type--", type(user)) <user_details aaa>
-                #     flatlist.append(user)
                 conn = sqlite3.connect(dbname)
                 conn.row_factory = dict_factory
                 cur = conn.cursor()
                 all = cur.execute("SELECT username FROM user_details;").fetchall()
-                print ("all ----------------", all)
                 flatlist = [ item for elem in all for item in elem]
-                print ("---flatlist---", flatlist)
                 return json.dumps(flatlist)
         elif(data == "count_ride"):
             ride= ride_details.query.filter(ride_details.rideid).count()
-            print("rideeeee----------", ride)
             return json.dumps(ride)
         else:
-            print("NOT FETCH----------")
             tn=eval(tn) 
             new_user=tn()
             result = data.find('AND') 
@@ -326,8 +285,6 @@ if((master == -1)and(new_master==0)):
                             cnt =cnt+1
                         a = getattr(i, j)
                         d[j].append(a)
-     
-            
             else:
                 q1 = data[:result-1]
                 q2 = data[result+4:]
@@ -351,7 +308,6 @@ if((master == -1)and(new_master==0)):
                         d[j].append(a)
             return d
             ch.basic_ack(delivery_tag = method.delivery_tag) 
-     
 
     def on_request(ch, method, props, body):
         print(" [x] Received IN REQUEST %r" % body)
@@ -365,30 +321,30 @@ if((master == -1)and(new_master==0)):
                      body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    channel.basic_consume(
-        queue=queue_name, on_message_callback=callback_sync, auto_ack=True)
-
-    channel.basic_consume(queue='rpcq', on_message_callback=on_request)
+    channel.basic_consume(queue=queue_name, \
+        on_message_callback=callback_sync, auto_ack=True)
+    channel.basic_consume(queue='rpcq',\
+         on_message_callback=on_request)
     print(' [*] Waiting for messages. To exit press CTRL+C')
 
 else:
+    # current worker is master
     new_master = 0
-
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    print("IN MASTER")
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-
     channel.queue_declare(queue='wq',durable = True)
 
     def callback_write(ch, method, properties, body): 
         print(" [x] Received %r" % body)
         print("======================")
-        print("MASTER WRITE PID^^^^^^^^^^^^^^^^^^^^^")
+        print("MASTER WRITE")
         print("======================")
         x=json.loads(body)
         data = x["insert"]
         cn = x["column"]
         tn = x["table"]
+        # act = actual 
+        # cn = column name
+        # tn = table name
+        # data = content 
         actcn = ""
         for i in cn:
             actcn = actcn+i
@@ -398,7 +354,6 @@ else:
                 db.session.commit()
                 print("userdb cleared")
             else:
-
                 ride_details.query.delete()
                 db.session.commit()
                 print("ride cleared")
@@ -409,18 +364,13 @@ else:
 
         else:
             tn=eval(tn) 
-            #print("DATA",data)
             actdata = ""
             for i in data:
                 actdata = actdata+i
             actcn = ""
             for i in cn:
                 actcn = actcn+i
-            #print("CN",cn)
-            #print("DATA",actdata)
-            #print("cn",actcn)
             if(actcn == "DELETE"):
-                #print("INSSSIIIIIIIIDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEE")
                 if('username' in actdata):
                     ind = actdata.find("=")
                     user = actdata[ind+2:]
