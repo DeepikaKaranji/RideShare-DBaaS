@@ -1,6 +1,6 @@
 # Rideshare
 
-This repository reflects the a 4 stage process we followed for creating the backend of Rideshare.
+This repository reflects the 4 stage process we followed for creating the backend of Rideshare.
 
 Stage 1: Build APIs
 Stage 2: Dockerised APIs into 1 docker container
