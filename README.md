@@ -1,6 +1,8 @@
 # Rideshare
 
-This repository reflects the 4 stage process we followed for creating the backend of Rideshare.
+RideShare is a Ride Pooling application to enable people share rides (like UberGo)
+This repository reflects the 4 stage process I followed for creating the backend of Rideshare.
+The specifications of each stage are available as PDF documents in the stage folders.
 
 Stage 1: Build APIs
 
@@ -8,7 +10,7 @@ Stage 2: Dockerised APIs into 1 docker container
 
 Stage 3: Seperated Rides and Users database, APIs as seperate containers running on seperate Amazon EC2 instances connected via load balancer
 
-Stage 4: Built a fault tolerant, highly available database as a service for the RideShare application. Our DBaaS has High Availability and Scalability implemented with Zookeeper and RabbitMQ.
+Stage 4: Built a fault tolerant, highly available database as a service for the RideShare application. This DBaaS has High Availability and Scalability implemented with Zookeeper and RabbitMQ.
 
 SSH into the following instances and clone this repository:
 User instance IP: 54.82.244.44
