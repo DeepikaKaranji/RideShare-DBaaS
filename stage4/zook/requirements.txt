@@ -3,6 +3,6 @@ pika
 kazoo
 Flask
 Flask-SQLAlchemy
-requests==2.8.1
+requests==2.20.0
 docker
 flask-cors
