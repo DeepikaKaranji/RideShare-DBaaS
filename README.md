@@ -100,16 +100,16 @@ DBaaS instance IP: 52.203.199.62
 To run the code after cloning:
 
 1. Setup user service:  
-$cd cloud/stage4/assignment3/users
-$docker-compose up --build
+`$cd cloud/stage4/assignment3/users`
+`$docker-compose up --build`
 
 2. Setup user service:  
-$cd cloud/stage4/assignment3/rides
-$docker-compose up --build
+`$cd cloud/stage4/assignment3/rides`
+`$docker-compose up --build`
 
 3. Set up DBaaS:  
-$cd cloud/stage4/zook
-$docker-compose up --build --scale worker=3
+`$cd cloud/stage4/zook`
+`$docker-compose up --build --scale worker=3`
 
 Then send requests to the instances.
 DONE!
