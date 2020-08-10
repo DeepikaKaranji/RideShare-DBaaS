@@ -1,7 +1,7 @@
 # Rideshare
-<a href="https://github.com/DeepikaKaranji/RideShare-DBaaS/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/DeepikaKaranji/RideShare-DBaaS"></a>
+[![GitHub issues](https://img.shields.io/github/issues/DeepikaKaranji/RideShare-DBaaS)](https://github.com/DeepikaKaranji/RideShare-DBaaS/issues)
+[![GitHub license](https://img.shields.io/github/license/DeepikaKaranji/RideShare-DBaaS)](https://github.com/DeepikaKaranji/RideShare-DBaaS/blob/master/LICENSE)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Generic badge](https://img.shields.io/badge/build-passing-green.svg)](https://shields.io/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![Generic badge](https://img.shields.io/badge/python-3.4|3.5|3.6-blue.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/API-RESTful-blue.svg)](https://shields.io/)
